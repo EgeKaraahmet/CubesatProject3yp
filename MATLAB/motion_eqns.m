@@ -1,3 +1,7 @@
+% This is a test by Ege to see if Matlab application can push changes to
+% github.
+
+
 function state_derivative = motion_eqns(t, state)
     % Extract state variables
     x = state(1);
