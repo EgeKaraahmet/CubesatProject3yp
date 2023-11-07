@@ -16,7 +16,7 @@ earth      = Earth(R_Earth, GM);
 
 % Initial states 
 r0 = 120e3;         % initial radial distance (m)
-v0 = 7200;          % initial velocity (m/s)
+v0 = 7.2;          % initial velocity (m/s)
 
 
 
@@ -26,6 +26,7 @@ lon0 = 0;           % Cubesat starts from the Prime Meridian
 % Convert polar coordinates to Caresian components 
 [x0, y0, z0] = earth.cartesian(lat0,lon0,r0); 
 [vx0,vy0,vz0] = earth.cartesian(lat0,lon0,v0);
+[ax0,ay0,az0] = earth.cartesian(0,0,0); 
 
 
 % Time span
@@ -80,8 +81,6 @@ xlabel('Time (s)');
 ylabel('Altitude (m)');
 title('Altitude vs. Time');
 grid on;
-
-
 
 
 

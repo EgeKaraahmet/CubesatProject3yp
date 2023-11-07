@@ -6,23 +6,22 @@ sim = {
     "max_it": 1000000,
     "delta_t": 0.1,
     "entry_interface": 120e3,   # QARMAN mission
-    "fpa": -8.1,
-    "velocity": 7.57e3,
+    "fpa": 0,
+    "velocity": 7200,
     "stop_alt": 0
 }
 
 # Define your spacecraft parameters as a dictionary
 craft = {
-    "name": "test 29/10/2023",
-    "ballistic_coef": 146,
-    "lift_drag": 0.24
+    "name": "Wk 5 ",
+    "ballistic_coef": 100,
+    "lift_drag": 0.3
 }
 
 
 # Define the planet object with a "radius" attribute
 planet = Earth()
 
-# Call the sim_run function with the defined parameters
 
 
 # Run the simulation

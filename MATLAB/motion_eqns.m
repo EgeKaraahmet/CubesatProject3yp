@@ -1,8 +1,3 @@
-% This is a test by Ege to see if Matlab application can push changes to
-% github. 5
-
-% I want to show you the differences between cloud and your local files.
-
 function state_derivative = motion_eqns(t, state)
     % Extract state variables
     x = state(1);
@@ -37,19 +32,19 @@ function state_derivative = motion_eqns(t, state)
     V_mag = norm(V); 
     
     %% Ballistic coefficient
-    M = 3   ;   % mass of the Cubesat
-    S = 20  ;   % Total surface area! need to consider aerobrake
+    M = 3   ;  % mass of the Cubesat
+    S = 1  ;   % Total surface area! need to consider aerobrake
 
     mach_no = V_mag/a; 
     [~,Cd]=database.get_mach_data(mach_no); 
 
-    Cb = Cd * S / M;  % ! This is not correct 
-
+    % Cb = Cd * S / M;  % ! This is not correct 
+    Cb = 200; 
  
 
     %% Derivatives 
     % Compute derivatives
-    dvdt = -GM * r / norm(r)^3 - 0.5 * rho * Cb * norm(v)^2 * v;
+    dvdt = -(GM * r / norm(r)^3) - 0.5 * rho * Cb * norm(v)^2 * v;
     drdt = V;
 
     % Create the state derivative vector

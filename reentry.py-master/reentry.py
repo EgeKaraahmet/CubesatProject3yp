@@ -1,62 +1,7 @@
 # ===---------------------------------------------------------------------------------------------===
 # reentry.py - Simple euler solver for spacecraft reentries.
 #
-#      The main aim is to control the flight path of the vehicle throughout
-#      the reentry phase with safety bounds.
 #
-#      To meet the objective, the states r, V , γ , φ , θ , ψ are considered,
-#      with their dynamics given by the following equations and
-#      with α as a control variable.
-# #
-# #     ṙ = V sinγ
-# #
-# #           D
-# #     V̇ = − - − g sinγ + Ωe^2 r cosφ( cosφ sinγ − cosγ sinφ sinψ)
-# #           m
-# #
-# #         L cosσ   g        V
-# #     γ̇ = ------ − - cosγ + - cosγ + 2 Ωe cosφ cosψ
-# #          mV      V        r
-# #
-# #             Ωe^2 r
-# #          +  ------ cosφ( cosγ cosφ + sinγ sinφ sinψ)
-# #               V
-# #
-# #           V cosγ sinψ
-# #     φ̇ =   -----------
-# #               r
-# #
-# #
-# #           V cosγ cosψ
-# #     θ̇ =   -----------
-# #             r cosφ
-# #
-# #           L sinσ    V
-# #     ψ̇ =   ------  − - (cosγ cosψ tanφ)
-# #           mV cosγ   r
-# #
-# #           + 2 Ωe ( tanγ cosφ sinψ − sin φ)
-# #              Ωe^2 r
-# #           −  ------ (sinφ cosφ cosψ)
-# #              V cosγ
-# #
-# #     where
-# #     r is the radial distance from the center of the Earth to the vehicle,
-# #     V is the earth relative velocity,
-# #     Ωe is the earth angular speed,
-# #     γ is the flight path angle,
-# #     σ is the bank angle,
-# #     ψ is the heading angle,
-# #     m is the mass of the vehicle,
-# #     g is the acceleration due to gravity,
-# #     φ and θ are the latitude and longitude respectively.
-# #
-# #
-# #
-# #   Constraints
-# #     (1) Heat flux constraint, q < 18.5 W/cm^2
-# #     (2) Dynamic pressure, Q < 45 kPa
-# ===---------------------------------------------------------------------------------------------===
 import sys
 import json
 import numpy as np
@@ -143,6 +88,7 @@ def sim_run(sim, planet, craft):
     beta = craft['ballistic_coef']
     ld = craft['lift_drag']
 
+
     # Very basic Euler integrator, running until we reach ~10km
     # (doesn't take parachute into acount -- decent would slow down then)
     k = 0
@@ -154,6 +100,7 @@ def sim_run(sim, planet, craft):
         rho = planet.density(planet.altitude(p))
         v_mag = np.linalg.norm(v)
         normal = np.array([v[1], v[0]])
+
 
         # Calculate drag and lift, this is pretty basic continuum equations
         # Because we use the ballistic coefficient, this isn't really a force but the acceleration
@@ -198,8 +145,7 @@ def do_plot(xlabel, x, ylabel, y, label, title, fname):
 
 if __name__ == '__main__':
     bodies = {
-        "Earth": Earth(),
-        "Mars": Mars()
+        "Earth": Earth()
     }
 
     if len(sys.argv) != 2:
