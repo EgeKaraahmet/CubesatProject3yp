@@ -1,27 +1,28 @@
 # Import the necessary functions or modules from reentry.py
+import matplotlib.pyplot as plt
 from reentry import *
+
 
 # Define your simulation parameters as a dictionary
 sim = {
     "max_it": 1000000,
     "delta_t": 0.1,
     "entry_interface": 120e3,   # QARMAN mission
-    "fpa": 0,
+    "fpa": 0.0,
     "velocity": 7200,
     "stop_alt": 0
 }
 
 # Define your spacecraft parameters as a dictionary
 craft = {
-    "name": "Wk 5 ",
-    "ballistic_coef": 100,
-    "lift_drag": 0.3
+    "name": "Prototype ",
+    "ballistic_coef": 50,
+    "lift_drag": 0
 }
 
 
 # Define the planet object with a "radius" attribute
 planet = Earth()
-
 
 
 # Run the simulation
@@ -45,42 +46,22 @@ aa = np.abs((ax * vx + ay * vy) / v)
 tti = np.max(t) - t
 dtg = np.max(downrange) - downrange
 
-f1 = plt.figure(figsize=(6, 2))
-do_plot(
-        'downrange (km)', downrange / 1e3,
-        'altitude (km)', alt / 1e3,
-        label, title, '%s-traj.png' % craft['name']
 
-    )
 
-f2 = plt.figure(figsize=(4, 3))
-do_plot(
-        'axial loads (g)', aa / 9.81,
-        'altitude (km)', alt / 1e3,
-        label, title, '%s-load_alt.png' % craft['name']
 
-    )
+# Create a single figure and multiple subplots
+fig, axs = plt.subplots(2, 3, figsize=(15, 7.5))  # 2 rows and 3 columns of subplots
 
-f3 = plt.figure(figsize=(4, 3))
-do_plot(
-        'time since EI (s)', t,
-        'axial loads (g)', aa / 9.81,
-        label, title, '%s-load_time.png' % craft['name']
-    )
+# Plot the data on each subplot
+do_plot(axs[0, 0], 'downrange (km)', downrange / 1e3, 'altitude (km)', alt / 1e3, label, title)
+do_plot(axs[0, 1], 'axial loads (g)', aa / 9.81, 'altitude (km)', alt / 1e3, label, title)
+do_plot(axs[0, 2], 'time since EI (s)', t, 'axial loads (g)', aa / 9.81, label, title)
+do_plot(axs[1, 0], 'distance to splashdown (km)', dtg / 1e3, 'time to parachute deploy (s)', tti / 60.0, label, title)
+do_plot(axs[1, 1], 'velocity (km/s)', v / 1e3, 'altitude (km)', alt / 1e3, label, title)
 
-f4 = plt.figure(figsize=(4, 3))
-do_plot(
-        'distance to splashdown (km)', dtg / 1e3,
-        'time to parachute deploy (s)', tti / 60.0,
-        label, title, '%s-dtg.png' % craft['name']
-    )
+# Adjust the layout
+plt.tight_layout()
 
-f5 = plt.figure(figsize=(4, 3))
-do_plot(
-        'velocity (km/s)', v / 1e3,
-        'altitude (km)', alt / 1e3,
-        label, title, '%s-vel.png' % craft['name']
-    )
-
-plt.close()
+# Show the plots
+plt.show()
 

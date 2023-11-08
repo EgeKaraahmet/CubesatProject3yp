@@ -1,12 +1,8 @@
 # ===---------------------------------------------------------------------------------------------===
 # reentry.py - Simple euler solver for spacecraft reentries.
-#
-#
-import sys
-import json
+
 import numpy as np
 from matplotlib import pyplot as plt
-
 
 
 class Planet(object):
@@ -19,10 +15,9 @@ class Planet(object):
     grav_k = 0
     name = ""
 
-    def __init__(self, radius, grav_k, name):
+    def __init__(self, radius, grav_k):
         self.radius = radius
         self.grav_k = grav_k
-        self.name = name
 
     def gravity(self, r):
         return -(self.grav_k / (r ** 2.0))
@@ -32,11 +27,11 @@ class Planet(object):
 
     def cartesian(self, lat, alt):
         r = alt + self.radius
-        return (r * np.cos(lat), r * np.sin(lat))
+        return r * np.cos(lat), r * np.sin(lat)
 
     def polar(self, x, y):
         alt = np.sqrt(x ** 2 + y ** 2) - self.radius
-        return (np.arctan2(x, y), alt)
+        return np.arctan2(x, y), alt
 
     def density(self, alt):
         return 0
@@ -45,7 +40,7 @@ class Planet(object):
 # Scale Height is defined for T=15C (288.15K)
 class Earth(Planet):
     def __init__(self):
-        Planet.__init__(self, 6371e3, 3.986004418e14, "Earth")
+        Planet.__init__(self, 6371e3, 3.986004418e14)
 
     def density(self, alt):
         return 1.221 * np.exp(- alt / 8.43e3)
@@ -56,13 +51,9 @@ class Earth(Planet):
 def sim_run(sim, planet, craft):
     """ Calculates the trajectory & loads of a craft reentering atmosphere on a planetary body
 
-  Uses a **very** basic Euler integrator and would probably benefit from a better solver.
-  However, the degree of simplification of the equation system makes it unlikely the work would
-  be worth it, given we probably have larger-magnitude errors induced by the model
+  Basic models
 
-  The model equations are simple:
-
-   - g = (mu * mass) / r^2      -> towards body centre
+   - g = GM / r^2               -> towards body centre
    - Drag = 0.5*rho*v^2 / Beta  -> opposite velocity vector
    - Lift = L/D * Drag          -> normal to velocity vector
   """
@@ -89,30 +80,47 @@ def sim_run(sim, planet, craft):
     ld = craft['lift_drag']
 
 
-    # Very basic Euler integrator, running until we reach ~10km
     # (doesn't take parachute into acount -- decent would slow down then)
     k = 0
     for _ in range(0, max_it):
-        p = p + v * dt
-        x[k], y[k] = p
+        p_prev = p
+        v_prev = v
+        r_prev = np.linalg.norm(p_prev)
+        rho_prev = planet.density(planet.altitude(p_prev))
+        v_mag_prev = np.linalg.norm(v_prev)
+        normal_prev = np.array([v_prev[1],v_prev[0]])
+
+        # aerodynamic acceleration
+        aero_accel_prev = 0.5 * rho_prev * v_mag_prev * (ld * normal_prev / beta - v_prev / beta)
+
+        # gravitational acceleration
+        gravity_accel_prev = planet.gravity(r_prev) * (p_prev / r_prev)
+
+        a_prev = aero_accel_prev + gravity_accel_prev
+
+        # Improved Euler's method
+        p = p_prev + v_prev * dt
+        v = v_prev + a_prev * dt
 
         r = np.linalg.norm(p)
         rho = planet.density(planet.altitude(p))
         v_mag = np.linalg.norm(v)
         normal = np.array([v[1], v[0]])
 
-
-        # Calculate drag and lift, this is pretty basic continuum equations
-        # Because we use the ballistic coefficient, this isn't really a force but the acceleration
-        # cause by aerodynamic forces
+        # aerodynamic acceleration
         aero_accel = 0.5 * rho * v_mag * (ld * normal / beta - v / beta)
+
+        # gravitational acceleration
         gravity_accel = planet.gravity(r) * (p / r)
 
         a = aero_accel + gravity_accel
         ax[k], ay[k] = a
 
-        v = v + a * dt
+        v = v_prev + 0.5 * (a_prev + a) * dt
         vx[k], vy[k] = v
+
+        p = p_prev + 0.5 * (v_prev + v) * dt
+        x[k], y[k] = p
 
         k += 1
         if planet.altitude(p) <= sim['stop_alt']:
@@ -130,91 +138,12 @@ def sim_run(sim, planet, craft):
     )
 
 
-def do_plot(xlabel, x, ylabel, y, label, title, fname):
+def do_plot(ax,xlabel, x, ylabel, y, label, title):
     """ Basic utility function to simplify plotting
   """
-    plt.plot(x, y, label=label)
-    plt.title(title)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
+    ax.plot(x, y, label=label)
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.legend()
     # plt.savefig(fname, dpi=300)
-
-
-if __name__ == '__main__':
-    bodies = {
-        "Earth": Earth()
-    }
-
-    if len(sys.argv) != 2:
-        print('usage: %s parameter_file' % sys.argv[0])
-        exit(1)
-
-    with open(sys.argv[1], 'r') as f:
-        params = json.load(f)
-
-    craft = params['craft']
-    planet = bodies[params['planet']]
-    sim = params['sim']
-
-    # Run the simulation
-    x, y, vx, vy, ax, ay, t = sim_run(sim, planet, craft)
-
-    title = r'%s ($\beta=%.0f\mathrm{kg}/\mathrm{m}^2$) @ %s' % (craft['name'], craft['ballistic_coef'], planet.name)
-    label = r'$fpa=%.2f, v_\mathrm{EI}=%.0f\mathrm{ms}^{-1}$' % (sim['fpa'], sim['velocity'])
-
-    # convert to useful cooridnates
-    lat, alt = planet.polar(x, y)
-    downrange = (lat) * planet.radius
-    vn = np.linalg.norm([vx, vy])
-
-    # Compute the velocity magnitude
-    v = np.sqrt(vx ** 2.0 + vy ** 2.0)
-
-    # Get the axial load ((ax,ay) projected onto (vx,vy))
-    aa = np.abs((ax * vx + ay * vy) / v)
-
-    # Time and distance to go
-    tti = np.max(t) - t
-    dtg = np.max(downrange) - downrange
-
-    f1 = plt.figure(figsize=(6, 2))
-    do_plot(
-        'downrange (km)', downrange / 1e3,
-        'altitude (km)', alt / 1e3,
-        label, title, '%s-traj.png' % craft['name']
-
-    )
-
-    f2 = plt.figure(figsize=(4, 3))
-    do_plot(
-        'axial loads (g)', aa / 9.81,
-        'altitude (km)', alt / 1e3,
-        label, title, '%s-load_alt.png' % craft['name']
-
-    )
-
-    f3 = plt.figure(figsize=(4, 3))
-    do_plot(
-        'time since EI (s)', t,
-        'axial loads (g)', aa / 9.81,
-        label, title, '%s-load_time.png' % craft['name']
-    )
-
-    f4 = plt.figure(figsize=(4, 3))
-    do_plot(
-        'distance to splashdown (km)', dtg / 1e3,
-        'time to parachute deploy (s)', tti / 60.0,
-        label, title, '%s-dtg.png' % craft['name']
-    )
-
-    f5 = plt.figure(figsize=(4, 3))
-    do_plot(
-        'velocity (km/s)', v / 1e3,
-        'altitude (km)', alt / 1e3,
-        label, title, '%s-vel.png' % craft['name']
-    )
-
-    plt.close()
