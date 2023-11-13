@@ -5,11 +5,11 @@ from matplotlib import pyplot as plt
 
 # Define your simulation parameters as a dictionary
 sim = {
-    "max_it": 100000,
+    "max_it": 10000000,
     "delta_t": 0.1,
-    "entry_interface": 500e3,   # QARMAN mission
+    "entry_interface": 200e3,   # QARMAN mission
     "fpa": 0,
-    "velocity": 7500,
+    "velocity": 7788,
     "stop_alt": 0
 }
 
@@ -61,7 +61,7 @@ do_plot(axs[0, 1], 'axial loads (g)', aa / 9.81, 'altitude (km)', alt / 1e3, lab
 do_plot(axs[0, 2], 'time since EI (s)', t, 'axial loads (g)', aa / 9.81, label, title)
 do_plot(axs[1, 0], 'distance to splashdown (km)', dtg / 1e3, 'time to parachute deploy (s)', tti / 60.0, label, title)
 do_plot(axs[1, 1], 'velocity (km/s)', v / 1e3, 'altitude (km)', alt / 1e3, label, title)
-do_plot(axs[1, 2],'altitude (km)' , alt / 1e3,'latitude (deg)', np.degrees(lat), label, title)
+do_plot(axs[1, 2],'altitude (km)' , alt / 1e3,'time (days)', tti/(86400), label, title)
 
 # Adjust the layout
 plt.tight_layout()
