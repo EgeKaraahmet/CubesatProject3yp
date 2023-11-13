@@ -6,11 +6,11 @@ from matplotlib import pyplot as plt
 # Define your simulation parameters as a dictionary
 sim = {
     "max_it": 10000000,
-    "delta_t": 0.1,
-    "entry_interface": 200e3,   # QARMAN mission
+    "delta_t": 1,
+    "entry_interface": 400e3,   # QARMAN mission
     "fpa": 0,
     "velocity": 7788,
-    "stop_alt": 0
+    "stop_alt": 4e3
 }
 
 # Define your spacecraft parameters as a dictionary
