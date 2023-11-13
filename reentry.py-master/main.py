@@ -1,22 +1,22 @@
 # Import the necessary functions or modules from reentry.py
-import matplotlib.pyplot as plt
 from reentry import *
+from matplotlib import pyplot as plt
 
 
 # Define your simulation parameters as a dictionary
 sim = {
-    "max_it": 1000000,
+    "max_it": 100000,
     "delta_t": 0.1,
-    "entry_interface": 120e3,   # QARMAN mission
-    "fpa": 0.0,
-    "velocity": 7200,
+    "entry_interface": 500e3,   # QARMAN mission
+    "fpa": 0,
+    "velocity": 7500,
     "stop_alt": 0
 }
 
 # Define your spacecraft parameters as a dictionary
 craft = {
     "name": "Prototype ",
-    "ballistic_coef": 50,
+    "ballistic_coef": 112,
     "lift_drag": 0
 }
 
@@ -42,9 +42,12 @@ v = np.sqrt(vx ** 2.0 + vy ** 2.0)
 # Get the axial load ((ax,ay) projected onto (vx,vy)) --> so also need to consider weight?
 aa = np.abs((ax * vx + ay * vy) / v)
 
+
 # Time and distance to go
 tti = np.max(t) - t
 dtg = np.max(downrange) - downrange
+
+
 
 
 
@@ -58,6 +61,7 @@ do_plot(axs[0, 1], 'axial loads (g)', aa / 9.81, 'altitude (km)', alt / 1e3, lab
 do_plot(axs[0, 2], 'time since EI (s)', t, 'axial loads (g)', aa / 9.81, label, title)
 do_plot(axs[1, 0], 'distance to splashdown (km)', dtg / 1e3, 'time to parachute deploy (s)', tti / 60.0, label, title)
 do_plot(axs[1, 1], 'velocity (km/s)', v / 1e3, 'altitude (km)', alt / 1e3, label, title)
+do_plot(axs[1, 2],'altitude (km)' , alt / 1e3,'latitude (deg)', np.degrees(lat), label, title)
 
 # Adjust the layout
 plt.tight_layout()

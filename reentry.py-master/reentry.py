@@ -2,7 +2,6 @@
 # reentry.py - Simple euler solver for spacecraft reentries.
 
 import numpy as np
-from matplotlib import pyplot as plt
 
 
 class Planet(object):
@@ -70,7 +69,6 @@ def sim_run(sim, planet, craft):
     vx = np.zeros(max_it)
     vy = np.zeros(max_it)
 
-    a = np.array([0, 0])
     ax = np.zeros(max_it)
     ay = np.zeros(max_it)
 
@@ -79,12 +77,12 @@ def sim_run(sim, planet, craft):
     beta = craft['ballistic_coef']
     ld = craft['lift_drag']
 
-
     # (doesn't take parachute into acount -- decent would slow down then)
     k = 0
     for _ in range(0, max_it):
         p_prev = p
         v_prev = v
+
         r_prev = np.linalg.norm(p_prev)
         rho_prev = planet.density(planet.altitude(p_prev))
         v_mag_prev = np.linalg.norm(v_prev)
