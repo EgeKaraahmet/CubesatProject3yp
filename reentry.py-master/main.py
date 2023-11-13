@@ -48,17 +48,41 @@ tti = np.max(t) - t
 dtg = np.max(downrange) - downrange
 
 
+def count_max_positive_occurrences(lat):
+    oscillation_count = 0
+    max_positive_value = float('-inf')
+
+    for value in lat:
+        if value > max_positive_value:
+            max_positive_value = value
+        elif value < 0:
+            # A negative value indicates the end of the current oscillation
+            if max_positive_value != float('-inf'):
+                oscillation_count += 1
+            max_positive_value = float('-inf')
+
+    # Check for the last oscillation
+    if max_positive_value != float('-inf'):
+        oscillation_count += 1
+
+    return oscillation_count
+
+oscillation_count = count_max_positive_occurrences(lat)
+print("Number of oscillations reaching maximum positive value:", oscillation_count)
 
 num_points = len(alt)
-downrange_flat_earth = np.linspace(0, num_points, num_points)
-no_of_Earth_circumference = downrange_flat_earth /(2*np.pi*planet.radius)
+downrange_flat_earth = np.linspace(0, (oscillation_count-1) * 2*np.pi* planet.radius + np.pi* planet.radius , num_points)
+no_of_Earth_circumference = downrange_flat_earth / (2*np.pi*planet.radius)
+
+
+
 
 
 # Create a single figure and multiple subplots
 fig, axs = plt.subplots(2, 3, figsize=(15, 7.5))  # 2 rows and 3 columns of subplots
 
 # Plot the data on each subplot
-do_plot(axs[0, 0], 'Downrange (km)', downrange_flat_earth / 1e3, 'altitude (km)', alt / 1e3, label, title)
+do_plot(axs[0, 0], 'Downrange (Mm)', downrange_flat_earth/1e6, 'altitude (km)', alt / 1e3, label, title)
 # do_plot(axs[0, 0], 'Downrange (km)', downrange / 1e3, 'altitude (km)', alt / 1e3, label, title)
 do_plot(axs[1, 0], 'No. of completed Earth Circumference', no_of_Earth_circumference, 'altitude (km)', alt / 1e3, label, title)
 # do_plot(axs[1, 0], 'distance to splashdown (km)', dtg / 1e3, 'time to parachute deploy (s)', tti / 60.0, label, title)
