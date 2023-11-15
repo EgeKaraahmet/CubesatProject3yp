@@ -75,6 +75,7 @@ def sim_run(sim, planet, craft):
     t = np.arange(0, max_it * dt, dt)
 
     beta = craft['ballistic_coef']
+    beta_parachute = craft['ballistic_coef_parachute']
     ld = craft['lift_drag']
 
     # (doesn't take parachute into acount -- decent would slow down then)

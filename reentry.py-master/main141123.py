@@ -1,5 +1,5 @@
 # Import the necessary functions or modules from reentry.py
-from reentry import *
+from reentry141123 import *
 from matplotlib import pyplot as plt
 
 
@@ -10,6 +10,7 @@ sim = {
     "entry_interface": 200e3,   # QARMAN mission
     "fpa": 0,
     "velocity": 7788,
+    "alt_parachute_open": 10e3,
     "stop_alt": 0
 }
 
@@ -17,7 +18,8 @@ sim = {
 craft = {
     "name": "Prototype ",
     "ballistic_coef": 112,
-    "lift_drag": 0
+    "lift_drag": 0,
+    "ballistic_coef_parachute": 2,
 }
 
 
@@ -26,7 +28,7 @@ planet = Earth()
 
 
 # Run the simulation
-x, y, vx, vy, ax, ay, t = sim_run(sim, planet, craft)
+x, y, vx, vy, ax, ay, t = sim_run141123(sim, planet, craft)
 
 title = r'%s ($\beta=%.0f\mathrm{kg}/\mathrm{m}^2$) @ %s' % (craft['name'], craft['ballistic_coef'], planet.name)
 label = r'$fpa=%.2f, v_\mathrm{EI}=%.0f\mathrm{ms}^{-1}$' % (sim['fpa'], sim['velocity'])
