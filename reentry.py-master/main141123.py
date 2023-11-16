@@ -9,7 +9,7 @@ sim = {
     "delta_t": 1,
     "entry_interface": 200e3,   # QARMAN mission
     "fpa": 0,
-    "velocity": 7788,
+    "velocity": 7788,   # 7672 for 400km
     "alt_parachute_open": 10e3,
     "stop_alt": 0
 }
@@ -20,6 +20,8 @@ craft = {
     "ballistic_coef": 112,
     "lift_drag": 0,
     "ballistic_coef_parachute": 2,
+    "mass": 6,
+    "surface_area": 150*1e-4
 }
 
 
@@ -76,41 +78,36 @@ num_points = len(alt)
 downrange_flat_earth = np.linspace(0, (oscillation_count-1) * 2*np.pi* planet.radius + np.pi* planet.radius , num_points)
 no_of_Earth_circumference = downrange_flat_earth / (2*np.pi*planet.radius)
 
-
-
-
-
 # Create a single figure and multiple subplots
 fig, axs = plt.subplots(2, 3, figsize=(15, 7.5))  # 2 rows and 3 columns of subplots
 
 # Plot the data on each subplot
+
+# [0,0]
 do_plot(axs[0, 0], 'Downrange (Mm)', downrange_flat_earth/1e6, 'altitude (km)', alt / 1e3, label, title)
 # do_plot(axs[0, 0], 'Downrange (km)', downrange / 1e3, 'altitude (km)', alt / 1e3, label, title)
+
+# [1,0]
 do_plot(axs[1, 0], 'No. of completed Earth Circumference', no_of_Earth_circumference, 'altitude (km)', alt / 1e3, label, title)
 # do_plot(axs[1, 0], 'distance to splashdown (km)', dtg / 1e3, 'time to parachute deploy (s)', tti / 60.0, label, title)
 
+# [0,1]
 do_plot(axs[0, 1], 'axial loads (g)', aa / 9.81, 'altitude (km)', alt / 1e3, label, title)
 
-# Limiting the axies
-ax02 = axs[0, 2]
+# [0,2]
+ax02 = axs[0, 2] # Limiting the axies
 do_plot(ax02, 'time since EI (days)', (t/(86400)), 'axial loads (g)', aa / 9.81, label, title)
 # Set the x-axis limits to start from t/86400 = 3
-min_x = 3.2
-max_x = max(t/86400)  # Calculate the maximum value dynamically
-ax02.set_xlim(min_x, max_x)
-
+# min_x = 3.2
+# max_x = max(t/86400)  # Calculate the maximum value dynamically
+# ax02.set_xlim(min_x, max_x)
 
 do_plot(axs[1, 1], 'velocity (km/s)', v / 1e3, 'altitude (km)', alt / 1e3, label, title)
 
 ax12 = axs[1, 2]
 do_plot(ax12,'time (s)', t,'altitude (km)' , alt / 1e3, label, title)
-min_x = 277500
-max_x = max(t)
-ax12.set_xlim(min_x,max_x)
-min_y = 0
-max_y = 60
-ax12.set_ylim(min_y, max_y)
-
+# min_x = 277500; max_x = max(t); ax12.set_xlim(min_x,max_x)
+# min_y = 0; max_y = 60; ax12.set_ylim(min_y, max_y)
 
 # Adjust the layout
 plt.tight_layout()
