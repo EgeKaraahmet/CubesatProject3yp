@@ -1,11 +1,11 @@
-import numpy as np
-from msise_90 import database
+# ===---------------------------------------------------------------------------------------------===
+# reentry.py - Simple euler solver for spacecraft reentries.
 
-atm = database()
+import numpy as np
+
 
 class Planet(object):
     """ Base class for planetary bodies.
-
   allows us to define more complex atmospheric models down the road, and to do coordinate system
   conversions.
   """
@@ -48,9 +48,7 @@ class Earth(Planet):
 
 def sim_run141123(sim, planet, craft):
     """ Calculates the trajectory & loads of a craft reentering atmosphere on a planetary body
-
   Basic models
-
    - g = GM / r^2               -> towards body centre
    - Drag = 0.5*rho*v^2 / Beta  -> opposite velocity vector
    - Lift = L/D * Drag          -> normal to velocity vector
@@ -76,98 +74,56 @@ def sim_run141123(sim, planet, craft):
     beta = craft['ballistic_coef']
     beta_parachute = craft['ballistic_coef_parachute']
     ld = craft['lift_drag']
-    m = craft['mass']
-    sa = craft['surface_area']
 
-
+    w = 7.2921159 * 1e-5
+    earth_rotation = np.array([[0, w], [-w, 0]])
 
     # (doesn't take parachute into acount -- decent would slow down then)
     k = 0
     for _ in range(0, max_it):
-            print(k)
             p_prev = p
             v_prev = v
             r_prev = np.linalg.norm(p_prev)
             rho_prev = planet.density(planet.altitude(p_prev))
+            v_relative_mag_prev = np.linalg.norm(v_prev - np.dot(earth_rotation, p_prev))
             v_mag_prev = np.linalg.norm(v_prev)
             normal_prev = np.array([v_prev[1],v_prev[0]])
 
-            Kn, Slip = atm.get_atmospheric_data(planet.altitude(p))
-
-
             if planet.altitude(p) > sim['alt_parachute_open']:
-                if Kn > 1:
-                    Cd = 2 / Slip
-                    beta = m / (Cd*1000)
-                    # aerodynamic acceleration
-                    aero_accel_prev = 0.5 * rho_prev * v_mag_prev * (ld * normal_prev / beta - v_prev / beta)
+                # aerodynamic acceleration
+                aero_accel_prev = 0.5 * rho_prev * v_relative_mag_prev * (ld * normal_prev / beta - v_prev / beta)
 
-                    # gravitational acceleration
-                    gravity_accel_prev = planet.gravity(r_prev) * (p_prev / r_prev)
+                # gravitational acceleration
+                gravity_accel_prev = planet.gravity(r_prev) * (p_prev / r_prev)
 
-                    a_prev = aero_accel_prev + gravity_accel_prev
+                a_prev = aero_accel_prev + gravity_accel_prev
 
-                    # Improved Euler's method
-                    p = p_prev + v_prev * dt
-                    v = v_prev + a_prev * dt
+                # Improved Euler's method
+                p = p_prev + v_prev * dt
+                v = v_prev + a_prev * dt
 
-                    r = np.linalg.norm(p)
-                    rho = planet.density(planet.altitude(p))
-                    v_mag = np.linalg.norm(v)
-                    normal = np.array([v[1], v[0]])
+                r = np.linalg.norm(p)
+                rho = planet.density(planet.altitude(p))
+                v_mag = np.linalg.norm(v)
+                normal = np.array([v[1], v[0]])
 
-                    # aerodynamic acceleration
-                    aero_accel = 0.5 * rho * v_mag * (ld * normal / beta - v / beta)
+                # aerodynamic acceleration
+                aero_accel = 0.5 * rho * v_mag * (ld * normal / beta - v / beta)
 
-                    # gravitational acceleration
-                    gravity_accel = planet.gravity(r) * (p / r)
+                # gravitational acceleration
+                gravity_accel = planet.gravity(r) * (p / r)
 
-                    a = aero_accel + gravity_accel
-                    ax[k], ay[k] = a
+                a = aero_accel + gravity_accel
+                ax[k], ay[k] = a
 
-                    v = v_prev + 0.5 * (a_prev + a) * dt
-                    vx[k], vy[k] = v
-                    p = p_prev + 0.5 * (v_prev + v) * dt
-                    x[k], y[k] = p
-                    k += 1
-
-                elif Kn < 1:
-                    beta = craft['ballistic_coef']
-
-                    # aerodynamic acceleration
-                    aero_accel_prev = 0.5 * rho_prev * v_mag_prev * (ld * normal_prev / beta - v_prev / beta)
-
-                    # gravitational acceleration
-                    gravity_accel_prev = planet.gravity(r_prev) * (p_prev / r_prev)
-
-                    a_prev = aero_accel_prev + gravity_accel_prev
-
-                    # Improved Euler's method
-                    p = p_prev + v_prev * dt
-                    v = v_prev + a_prev * dt
-
-                    r = np.linalg.norm(p)
-                    rho = planet.density(planet.altitude(p))
-                    v_mag = np.linalg.norm(v)
-                    normal = np.array([v[1], v[0]])
-
-                    # aerodynamic acceleration
-                    aero_accel = 0.5 * rho * v_mag * (ld * normal / beta - v / beta)
-
-                    # gravitational acceleration
-                    gravity_accel = planet.gravity(r) * (p / r)
-
-                    a = aero_accel + gravity_accel
-                    ax[k], ay[k] = a
-
-                    v = v_prev + 0.5 * (a_prev + a) * dt
-                    vx[k], vy[k] = v
-                    p = p_prev + 0.5 * (v_prev + v) * dt
-                    x[k], y[k] = p
-                    k += 1
+                v = v_prev + 0.5 * (a_prev + a) * dt
+                vx[k], vy[k] = v
+                p = p_prev + 0.5 * (v_prev + v) * dt
+                x[k], y[k] = p
+                k += 1
             elif planet.altitude(p) < sim['alt_parachute_open'] and planet.altitude(p) > sim['stop_alt']:
                 # aerodynamic acceleration
-                aero_accel_prev = 0.5 * rho_prev * v_mag_prev * (ld * normal_prev / beta_parachute - v_prev / beta_parachute)
+                aero_accel_prev = 0.5 * rho_prev * v_relative_mag_prev * (ld * normal_prev / beta_parachute - v_prev / beta_parachute)
                 # gravitational acceleration
                 gravity_accel_prev = planet.gravity(r_prev) * (p_prev / r_prev)
                 a_prev = aero_accel_prev + gravity_accel_prev
