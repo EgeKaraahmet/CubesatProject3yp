@@ -10,8 +10,7 @@ sim = {
     "entry_interface": 200e3,   # QARMAN mission
     "fpa": 0,
     "velocity": 7788,
-    "alt_parachute_open": 10e3,
-    "stop_alt": 0
+    "stop_alt": 5e3
 }
 
 # Define your spacecraft parameters as a dictionary
@@ -42,7 +41,9 @@ vn = np.linalg.norm([vx, vy])
 v = np.sqrt(vx ** 2.0 + vy ** 2.0)
 
 # Get the axial load ((ax,ay) projected onto (vx,vy)) --> so also need to consider weight?
-aa = np.abs((ax * vx + ay * vy) / v)
+# aa = np.abs((ax * vx + ay * vy) / v)
+
+aa = np.sqrt((ax **2 + ay **2))
 
 
 # Time and distance to go
@@ -95,9 +96,9 @@ do_plot(axs[0, 1], 'axial loads (g)', aa / 9.81, 'altitude (km)', alt / 1e3, lab
 ax02 = axs[0, 2]
 do_plot(ax02, 'time since EI (days)', (t/(86400)), 'axial loads (g)', aa / 9.81, label, title)
 # Set the x-axis limits to start from t/86400 = 3
-min_x = 3.2
-max_x = max(t/86400)  # Calculate the maximum value dynamically
-ax02.set_xlim(min_x, max_x)
+# min_x = 3.2
+# max_x = max(t/86400)  # Calculate the maximum value dynamically
+# ax02.set_xlim(min_x, max_x)
 
 
 do_plot(axs[1, 1], 'velocity (km/s)', v / 1e3, 'altitude (km)', alt / 1e3, label, title)
