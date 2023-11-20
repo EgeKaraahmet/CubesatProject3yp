@@ -121,7 +121,7 @@ class database:
         S = 1 + Kn * (2.514 + 0.8*np.exp(-0.55/Kn))
 
         # return t, d, p, m,Kn, S
-        return Kn, S
+        return d
 
 
 
@@ -134,15 +134,16 @@ if __name__ == "__main__":
     alt = 200  # km
 
     # t, d, p, m,Kn, S= atm.get_atmospheric_data(alt)
-    Kn, S = atm.get_atmospheric_data(alt)
+    d = atm.get_atmospheric_data(alt)
     
     # print atm data for that altitude
     from tabulate import tabulate
     data = []
     # headers=['Altitude(km)', 'Temp(K)', 'Density(kg/m3)', 'Pressure(Pa)', 'Mol. Wt.(kg/kmol)', 'Kundsen no.', 'Slip factor']
-    headers = [ 'Kundsen no.','Slip factor']
+    # headers = [ 'Kundsen no.','Slip factor']
+    headers = ['density']
     # data.append( [alt, t, d, p, m, Kn, S] )
-    data.append([Kn, S])
+    data.append([d])
     print ( tabulate(data, headers) )
    
 
