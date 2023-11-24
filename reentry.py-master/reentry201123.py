@@ -1,10 +1,18 @@
 # ===---------------------------------------------------------------------------------------------===
 # reentry.py - Simple euler solver for spacecraft reentries.
-
+import math
 import numpy as np
 from msise_90 import database
 
 atm = database()
+
+rho0   = 1.225         # sea level density of atmosphere (kg/m^3)
+R = 287.4              # specific gas constant for air
+K = 1.4                # ratio of specific heat of a gas at a constant pressure to heat at a constant volume (1.4 for air)
+T0 = 288.15            # K standard temperature at sea level
+M = 6
+A = 0.01
+
 
 
 class Planet(object):
@@ -74,9 +82,12 @@ def sim_run141123(sim, planet, craft):
 
     t = np.arange(0, max_it * dt, dt)
 
-    beta = craft['ballistic_coef']
-    beta_parachute = craft['ballistic_coef_parachute']
+    # Cb = M / Cd*S
+
+    # beta = craft['ballistic_coef']
+    # beta_parachute = craft['ballistic_coef_parachute']
     ld = craft['lift_drag']
+
 
     w = 7.2921159 * 1e-5
     earth_rotation = np.array([[0, w], [-w, 0]])
@@ -89,14 +100,22 @@ def sim_run141123(sim, planet, craft):
             p_prev = p
             v_prev = v
             r_prev = np.linalg.norm(p_prev)
-            rho_prev = atm.get_atmospheric_data(planet.altitude(p_prev)/1e3)    # Medium solar activity considered
+            # rho_prev = atm.get_atmospheric_data(planet.altitude(p_prev)/1e3)    # Medium solar activity considered
+
+            alt_km_prev = (planet.altitude(p_prev)/1e3)
+            T_prev, rho_prev, p_prev = atm.get_atmospheric_data(alt_km_prev)
             # rho_prev = planet.density(planet.altitude(p_prev))            # exponential model
             v_relative_mag_prev = np.linalg.norm(v_prev - np.dot(earth_rotation, p_prev))
-            # v_relative_mag_prev = np.linalg.norm(v_prev)                            # absolute velocity mag
+            v_abs_mag_prev = np.linalg.norm(v_prev)                            # absolute velocity mag
+
+            # get CLa, CD0 for Mach number (from tables)
+            mach_prev = v_abs_mag_prev / math.sqrt(K * R * T_prev)
+            Cd_prev = atm.get_mach_data(mach_prev)  # drag coefficient
+            beta_prev = M /(Cd_prev * A)
             normal_prev = np.array([v_prev[1],v_prev[0]])
 
             # aerodynamic acceleration
-            aero_accel_prev = 0.5 * rho_prev * v_relative_mag_prev * (ld * normal_prev / beta - v_prev / beta)
+            aero_accel_prev = 0.5 * rho_prev * v_relative_mag_prev * (ld * normal_prev / beta_prev - v_prev / beta_prev)
 
             # gravitational acceleration
             gravity_accel_prev = planet.gravity(r_prev) * (p_prev / r_prev)
@@ -108,12 +127,19 @@ def sim_run141123(sim, planet, craft):
             v = v_prev + a_prev * dt
 
             r = np.linalg.norm(p)
-            rho = atm.get_atmospheric_data(planet.altitude(p)/1e3)  # Medium solar activity considered
+
+
+            alt_km = (planet.altitude(p) / 1e3)
+            T, rho, p = atm.get_atmospheric_data(alt_km)
             # rho = planet.density(planet.altitude(p))          # Expoential model
-            # v_relative_mag = np.linalg.norm(v)
+            v_abs_mag = np.linalg.norm(v)
             v_relative_mag = np.linalg.norm(v - np.dot(earth_rotation, p))
             normal = np.array([v[1], v[0]])
 
+            # get CLa, CD0 for Mach number (from tables)
+            mach = v_abs_mag / math.sqrt(K * R * T)
+            Cd = atm.get_mach_data(mach)  # drag coefficient
+            beta = M / (Cd * A)
             # aerodynamic acceleration
             aero_accel = 0.5 * rho * v_relative_mag * (ld * normal / beta - v / beta)
 

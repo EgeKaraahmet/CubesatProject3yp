@@ -1,10 +1,33 @@
-
 import numpy as np
 from io import StringIO
 from bisect import bisect_left
 
+
+
 class database:
     # data
+
+    __mach_data = """
+    Mach Number|CLa(per radian)|CDo
+    0|12.6|0.0
+    0.2|12.6|0.2
+    0.5|12.6|0.3
+    0.6|13.0|0.4
+    0.8|13.8|0.43
+    1.05|17.5|0.47
+    1.5|14.7|0.55
+    2.0|13.8|0.51
+    2.5|11.4|0.49
+    3.0|10.1|0.47
+    4.0|9.3|0.43
+    5.0|7.5|0.39
+    6.0|6.8|0.39
+    7.0|6.8|0.39
+    8.0|6.8|0.39
+    9.0|6.8|0.39
+    10.0|6.8|0.39
+    """
+
     __atm_data = """
     MSISE-90 - Mean Solar Activity
     Altitude(km)|Temp(K)|Density(kg/m3)|Pressure(Pa)|Mol. Wt.(kg/kmol)
@@ -55,15 +78,16 @@ class database:
     880|1011.5379|6.28E-15|1.04E-08|5.1066
     900|1011.5379|5.46E-15|9.47E-09|4.8460
     """
- 
+
     # read parse and store data in ndr object
     def __init__(self):
-        self.__ndr = self.__read_data()
-        
+        self.__ndr, self.__mch = self.__read_data()
+
     # parse atmospheric data (from data string)
     def __read_data(self):
         atw = np.genfromtxt(StringIO(self.__atm_data), delimiter='|', skip_header=2)
-        return atw
+        mch = np.genfromtxt(StringIO(self.__mach_data), delimiter='|', skip_header=1)
+        return atw, mch
 
     # simple linear interpolation
     def __interpolate(self, x_list, y_list, x):
@@ -87,63 +111,48 @@ class database:
         temperature = self.__ndr[:, 1]
         density = self.__ndr[:, 2]
         pressure = self.__ndr[:, 3]
-        molwt = self.__ndr[:, 4]
         # interpolate values
         t = self.__interpolate(altitude, temperature, alt)
         d = self.__interpolate(altitude, density, alt)
         p = self.__interpolate(altitude, pressure, alt)
-        m = self.__interpolate(altitude, molwt, alt)
+        return t, d, p
 
-        # Compute dynamic viscosity using Sutherland's formula
-        # https://doc.comsol.com/5.5/doc/com.comsol.help.cfd/cfd_ug_fluidflow_high_mach.08.27.html
-        # miu_oxygen = 1.919*1e-5
-        # miu = miu_oxygen *((273+139)/(t+139))*(t/273)**(1.5)
-        # Compute mean free path
-        # l = np.sqrt(np.pi/8) * (0.498/miu) * (d*p)**(-1/2)
-        # particle diameter --> Oxygen atoms and nitrogen atoms--> consider the mean of the two
-        # dp = 0.5 *(0.74+0.71)*1e-10
-        # Compute Knudsen number (Kn)
-        # https://doc.comsol.com/5.6/doc/com.comsol.help.particle/particle_ug_fluid_flow.08.37.html
-        # Kn = l/dp
-
-        # Boltzmann constant --> assume at high altitude, boltzmann gas
-        kb = 1.380649*1e-23
-        # particle diameter --> Oxygen atoms and nitrogen atoms--> consider the mean of the two
-        dp = (2.94+3)/2*1e-10
-
-        # characteristic length of our cubesat
-        L = 0.3 # 0.3
-
-        # Kundsen number
-        Kn = kb*t / (np.sqrt(2)*L*np.pi*p*dp**2)
-
-        # Correction factor:
-        S = 1 + Kn * (2.514 + 0.8*np.exp(-0.55/Kn))
-
-        # return t, d, p, m,Kn, S
-        return d
-
+    # returns interpolated CL, CD data for each mach number
+    def get_mach_data(self, mach_no):
+        # split the arrays
+        ar_mach = self.__mch[:, 0]
+        ar_cl = self.__mch[:, 1]
+        ar_cd = self.__mch[:, 2]
+        # interpolate values
+        cd = self.__interpolate(ar_mach, ar_cd, mach_no)
+        return cd
 
 
 # main function
 if __name__ == "__main__":
     # create instance
     atm = database()
-    
-    # get data for sample altitude (given in km)
-    alt = 200  # km
 
-    # t, d, p, m,Kn, S= atm.get_atmospheric_data(alt)
-    d = atm.get_atmospheric_data(alt)
-    
+    # get data for sample altitude (given in km)
+    alt = 10550.04 / 1000  # 132.6 # km
+    t, d, p, m = atm.get_atmospheric_data(alt)
+
     # print atm data for that altitude
     from tabulate import tabulate
-    data = []
-    # headers=['Altitude(km)', 'Temp(K)', 'Density(kg/m3)', 'Pressure(Pa)', 'Mol. Wt.(kg/kmol)', 'Kundsen no.', 'Slip factor']
-    # headers = [ 'Kundsen no.','Slip factor']
-    headers = ['density']
-    # data.append( [alt, t, d, p, m, Kn, S] )
-    data.append([d])
-    print ( tabulate(data, headers) )
-   
 
+    data = []
+    headers = ['Altitude(km)', 'Temp(K)', 'Density(kg/m3)', 'Pressure(Pa)', 'Mol. Wt.(kg/kmol)']
+    data.append([alt, t, d, p, m])
+    print(tabulate(data, headers))
+
+    # get data for sample mach number
+    mach_no = 2.6  # km
+    cd = atm.get_mach_data(mach_no)
+
+    # print atm data for that altitude
+    from tabulate import tabulate
+
+    data = []
+    headers = ['Mach Number', 'CDo(kg/m3)']
+    data.append([mach_no, cd])
+    print(tabulate(data, headers))

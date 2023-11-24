@@ -75,21 +75,21 @@ def sim_run141123(sim, planet, craft):
     beta_parachute = craft['ballistic_coef_parachute']
     ld = craft['lift_drag']
 
-   # w = 7.2921159 * 1e-5
-   # earth_rotation = np.array([[0, w], [-w, 0]])
+    w = 7.2921159 * 1e-5
+    earth_rotation = np.array([[0, w], [-w, 0]])
 
     # (doesn't take parachute into acount -- decent would slow down then)
     k = 0
     for _ in range(0, max_it):
-            if k % 10000 == 0:
+            if k % 50000 == 0:
                print(k)
 
             p_prev = p
             v_prev = v
             r_prev = np.linalg.norm(p_prev)
             rho_prev = planet.density(planet.altitude(p_prev))
-            # v_relative_mag_prev = np.linalg.norm(v_prev - np.dot(earth_rotation, p_prev))
-            v_relative_mag_prev = np.linalg.norm(v_prev)    # v_mag_prev = v_relative_mag_prev
+            v_relative_mag_prev = np.linalg.norm(v_prev - np.dot(earth_rotation, p_prev))
+            # v_relative_mag_prev = np.linalg.norm(v_prev)    # v_mag_prev = v_relative_mag_prev
             normal_prev = np.array([v_prev[1],v_prev[0]])
 
 
@@ -107,8 +107,8 @@ def sim_run141123(sim, planet, craft):
 
             r = np.linalg.norm(p)
             rho = planet.density(planet.altitude(p))
-            v_relative_mag = np.linalg.norm(v)        # v_relative_mag_prev
-            # v_relative_mag = np.linalg.norm(v - np.dot(earth_rotation, p))
+            # v_relative_mag = np.linalg.norm(v)        # v_relative_mag_prev
+            v_relative_mag = np.linalg.norm(v - np.dot(earth_rotation, p))
             normal = np.array([v[1], v[0]])
 
             # aerodynamic acceleration
