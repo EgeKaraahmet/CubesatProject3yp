@@ -30,7 +30,7 @@ F107_day=86.0;          %SFU        % F10.7 average of day before the date under
 
 Kp=1;                                 % Kp three-hourly planetary geomagneticindex
 
-alt_0 = 400;              %km         % initial altitude 
+alt_0 = 200;              %km         % initial altitude    %% 400 km
 r_a=alt_0+Re;             %km         % radius at apoapsis
 r_p=alt_0+Re;             %km         % radius at periapsis
 a=(r_a+r_p)/2;            %km         % semimajor axis
@@ -40,10 +40,11 @@ e=(r_a-r_p)/(r_a+r_p);                % eccentricity
 %re-entry path initial values (at t=0 s)
 x0=0;                             % m          % travelled distance
 gamma0=0;                         % rad        % flight path angle
-theta0=0;                         % rad        % true anomaly 
-r0=a*(1-e^2)/(1+e*cos(theta0));   % km         %  %position vector length
+theta0=51.6 * pi/180;             % rad        % true anomaly 
+r0=a*(1-e^2)/(1+e*cos(theta0));   % km         % position vector length
 h0=r0-Re;                         % km         % height 
-V0=sqrt(mi*(2/r0-1/a));           % km/s       % orbital speed
+V0=sqrt(mi*(2/r0-1/a));           % km/s       % orbital speed (ellipse)
+V0 = 7.788; 
 
 %de-orbiting retrograde burn
 dV=0;                             % km/s       % impulsive delta V obtained
@@ -222,11 +223,10 @@ up=theta(end)-2*pi+0.01;
 down=theta(end)-2*pi-0.01;
 orb_mask=fix(mean(find(theta<up & theta>down)));
 
-figure
-polarplot(theta(orb_mask:end),h(orb_mask:end)+6371,circ_ang,circ_r,...
-    theta(kar_mask),h(kar_mask)+6371,'or')
-title('Re-entry trajectory')
-legend('s/c trajectory','Earth''s surface','Karman line crossing')
+%figure
+%polarplot(theta(orb_mask:end),h(orb_mask:end)+6371,circ_ang,circ_r,theta(kar_mask),h(kar_mask)+6371,'or')
+%title('Re-entry trajectory')
+%legend('s/c trajectory','Earth''s surface','Karman line crossing')
 
 figure
 plot(Vx,h,Vz,h)

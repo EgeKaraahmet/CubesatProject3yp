@@ -30,7 +30,7 @@ F107_day=86.0;          %SFU        % F10.7 average of day before the date under
 
 Kp=1;                                 % Kp three-hourly planetary geomagneticindex
 
-alt_0 = 400;              %km         % initial altitude 
+alt_0 = 200;              %km         % initial altitude 
 r_a=alt_0+Re;             %km         % radius at apoapsis
 r_p=alt_0+Re;             %km         % radius at periapsis
 a=(r_a+r_p)/2;            %km         % semimajor axis
@@ -72,7 +72,7 @@ stop_h=stop_h*1000;             %m
 
 
 
-%%
+kepOut = sim('SatSim_ARES','Solver',solv_kep,'FixedStep',step_kep);
 %   updating initial conditions, 2nd run using ouput from 1st
 
 %space environment
@@ -96,8 +96,7 @@ V0=kepOut.V(end);            %m/s      %orbital speed
 stop_h=0;   %m          %final desired altitude
 %%%%%%%%%%%%%%%%%%
 
-atmOut = sim('SatSim_ARES','Solver',solv_atm,'FixedStep',step_atm,...
-    'StartTime','kepOut.time(end)');
+atmOut = sim('SatSim_ARES','Solver',solv_atm,'FixedStep',step_atm,'StartTime','kepOut.time(end)');
 
 
 %% Results analysis and plotting
@@ -162,67 +161,74 @@ Vz=Vz/1000;   %[m/s] to [km/s]
 Vx=Vx/1000;   %[m/s] to [km/s]
 gamma=rad2deg(gamma);  %[rad] to [deg]
 %theta=rad2deg(theta);
+
+%%
 %plotting
-nfigure(1,2,3)
+figure
 plot(V,h)
 xlabel('velocity [km/s]')
 ylabel('altitude [km]')
 grid on
 grid minor
-nfigure(2,2,3)
+figure
 plot(h,heat1)
 xlabel('altitude [km]')
 ylabel('heat flux [W/m^2]')
 grid on
 grid minor
 
-nfigure(3,2,3)
+figure
 plot(h,gload)
 xlabel('altitude [km]')
 ylabel('axial load factor [g]')
 grid on
 grid minor
-nfigure(4,2,3)
+
+figure
 plot(time.*60./3.154e+7,h)
 xlabel('time [years]')
 
 ylabel('altitude [km]')
 grid on
 grid minor
-nfigure(5,2,3)
+
+figure
 plot(time.*60./3.154e+7,V)
 xlabel('time [years]')
 ylabel('velocity [km/s]')
 grid on
 grid minor
-nfigure(6,2,3)
+
+figure
 plot(gamma,h)
 xlabel('flight path angle [deg]')
 ylabel('altitude [km]')
 grid on
 grid minor
+
 %Earth's surface circle generation
 circ_ang=0:0.01:2.1*pi;
 lcirc=length(circ_ang);
 circ_r=ones(1,lcirc).*6371;
-nfigure(7,2,3)
+
+figure
 polarplot(theta,h+6371,circ_ang,circ_r,...
     theta(1),h(1)+6371,'*g',theta(end),h(end)+6371,'*r')
 title('Trajectory shape evolution')
-legend('s/c trajectory','Earth''s surface',...
-    'Initial position','Landing position')
+legend('s/c trajectory','Earth''s surface','Initial position','Landing position')
 %Karman line crossing detection
 kar_mask=fix(mean(find(h<100.1 & h>99.9)));
 %isolation of the last orbit
 up=theta(end)-2*pi+0.01;
 down=theta(end)-2*pi-0.01;
 orb_mask=fix(mean(find(theta<up & theta>down)));
-nfigure(8,2,3)
-polarplot(theta(orb_mask:end),h(orb_mask:end)+6371,circ_ang,circ_r,...
-    theta(kar_mask),h(kar_mask)+6371,'or')
+
+figure
+polarplot(theta(orb_mask:end),h(orb_mask:end)+6371,circ_ang,circ_r,theta(kar_mask),h(kar_mask)+6371,'or')
 title('Re-entry trajectory')
 legend('s/c trajectory','Earth''s surface','Karman line crossing')
-nfigure(9,2,3)
+
+figure
 plot(Vx,h,Vz,h)
 xlabel('velocity [km/s]')
 ylabel('altitude [km]')
