@@ -22,7 +22,7 @@ BC=m/A/Cd;              %kg/m^2     % ballistic coefficient
 rcurv=0.1;              %m          % TPS nose curvature radius
 
 %space environment      
-date=[2006,01,01,12,00,00];         % intial time of simulation [y,m,d,h,m,s]
+date=[2023,01,01,12,00,00];         % intial time of simulation [y,m,d,h,m,s]
 jdate=juliandate(date);
 F107_avg=90.85;         %SFU        % F10.7 average of 3x27 days before the date under consideration
 F107_day=86.0;          %SFU        % F10.7 average of day before the date under consideration
@@ -40,7 +40,7 @@ e=(r_a-r_p)/(r_a+r_p);                % eccentricity
 %re-entry path initial values (at t=0 s)
 x0=0;                             % m          % travelled distance
 gamma0=0;                         % rad        % flight path angle
-theta0=51.6 * pi/180;             % rad        % true anomaly 
+theta0=0;                         % rad        % true anomaly 
 r0=a*(1-e^2)/(1+e*cos(theta0));   % km         % position vector length
 h0=r0-Re;                         % km         % height 
 V0=sqrt(mi*(2/r0-1/a));           % km/s       % orbital speed (ellipse)
@@ -52,11 +52,11 @@ V0=V0-dV;                         % km/s       % effective inital speed
 
 %integration method
 solv_kep='ode4';                  % solver method for orbital phase. ode4 is runge kutta
-step_kep='30';  %s                % keplerian intergartor fixed step size 
+step_kep='30';  %s                % keplerian intergartor fixed step size   % 30 
 stop_h=150;     %km               % thres alt for switch from Kep. to Atm. phase 
 
 solv_atm = 'ode4';                % solver method for re-entry phase. ode4 is runge kutta
-step_atm='0.1'; %s                % atmospheric integrator fixed step size
+step_atm='0.1'; %s                % atmospheric integrator fixed step size     % 0.1
 
 %conversions to I.S.
 Re=Re*1000;                     %m
@@ -139,8 +139,11 @@ end
 %%
 %   data analysis
 %time to deorbit
-nyears=time(end)/3.154e+7;
-fprintf('Total time to de-orbit: %3.2f years\n',nyears)
+% nyears=time(end)/3.154e+7;
+% fprintf('Total time to de-orbit: %3.2f years\n',nyears)
+
+ndays=time(end)/3.154e+7*365;
+fprintf('Total time to de-orbit: %3.2f days\n',ndays)
 
 %structural loading
 gload=abs(dotV/g0);             %strutural loading [g]
@@ -177,6 +180,13 @@ ylabel('heat flux [W/m^2]')
 grid on
 grid minor
 
+% figure
+%plot(time.*60./3.154e+7*365,heat1)
+%xlabel('time [days]')
+%ylabel('heat flux [W/m^2]')
+%grid on
+%grid minor
+
 figure
 plot(h,gload)
 xlabel('altitude [km]')
@@ -185,15 +195,19 @@ grid on
 grid minor
 
 figure
-plot(time.*60./3.154e+7,h)
-xlabel('time [years]')
+% plot(time.*60./3.154e+7,h)
+% xlabel('time [years]')
+plot(time.*60./3.154e+7*365,h)
+xlabel('time [days]')
 ylabel('altitude [km]')
 grid on
 grid minor
 
 figure
-plot(time.*60./3.154e+7,V)
-xlabel('time [years]')
+% plot(time.*60./3.154e+7,V)
+% xlabel('time [years]')
+plot(time.*60./3.154e+7*365,h)
+xlabel('time [days]')
 ylabel('velocity [km/s]')
 grid on
 grid minor
@@ -211,11 +225,9 @@ lcirc=length(circ_ang);
 circ_r=ones(1,lcirc).*6371;
 
 figure
-polarplot(theta,h+6371,circ_ang,circ_r,...
-    theta(1),h(1)+6371,'*g',theta(end),h(end)+6371,'*r')
+polarplot(theta,h+6371,circ_ang,circ_r,theta(1),h(1)+6371,'*g',theta(end),h(end)+6371,'*r')
 title('Trajectory shape evolution')
-legend('s/c trajectory','Earth''s surface',...
-    'Initial position','Landing position')
+legend('s/c trajectory','Earth''s surface','Initial position','Landing position')
 %Karman line crossing detection
 kar_mask=fix(mean(find(h<100.1 & h>99.9)));
 %isolation of the last orbit
@@ -223,10 +235,10 @@ up=theta(end)-2*pi+0.01;
 down=theta(end)-2*pi-0.01;
 orb_mask=fix(mean(find(theta<up & theta>down)));
 
-%figure
-%polarplot(theta(orb_mask:end),h(orb_mask:end)+6371,circ_ang,circ_r,theta(kar_mask),h(kar_mask)+6371,'or')
-%title('Re-entry trajectory')
-%legend('s/c trajectory','Earth''s surface','Karman line crossing')
+figure
+polarplot(theta(orb_mask:end),h(orb_mask:end)+6371,circ_ang,circ_r,theta(kar_mask),h(kar_mask)+6371,'or')
+title('Re-entry trajectory')
+legend('s/c trajectory','Earth''s surface','Karman line crossing')
 
 figure
 plot(Vx,h,Vz,h)
