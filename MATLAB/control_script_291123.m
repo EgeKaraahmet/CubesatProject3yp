@@ -12,8 +12,6 @@ close all
 m = 6;                    %kg         % spacecraft mass  m = 3 for ISS
 A=(10e-2)^2;            %m^2        % spacecraft cross - sectional area
 Cd=2.2;                             % drag coefficient
-BC = m / Cd / A; 
-BC = 122; 
 
 %constants
 mi=398600.44;           %km^3/s^2   % Earth G*M
@@ -74,7 +72,7 @@ stop_h=stop_h*1000;             %m
 %Integration step: 30 s
 %First run stops when altitude reaches stop_h threshold
 
-kepOut = sim('SatSim_ARES','Solver',solv_kep,'FixedStep',step_kep);
+kepOut = sim('control_model_preliminary','Solver',solv_kep,'FixedStep',step_kep);
 
 %   updating initial conditions, 2nd run using ouput from 1st
 
@@ -99,7 +97,7 @@ V0=kepOut.V(end);            %m/s      %orbital speed
 stop_h=0;   %m          %final desired altitude
 %%%%%%%%%%%%%%%%%%
 
-atmOut = sim('SatSim_ARES','Solver',solv_atm,'FixedStep',step_atm,'StartTime','kepOut.time(end)');
+atmOut = sim('control_model_preliminary','Solver',solv_atm,'FixedStep',step_atm,'StartTime','kepOut.time(end)');
 
 %% Results analysis and plotting
 %   union of 1st and 2nd run results
