@@ -88,8 +88,8 @@ def sim_run141123(sim, planet, craft):
             v_prev = v
             r_prev = np.linalg.norm(p_prev)
             rho_prev = planet.density(planet.altitude(p_prev))
-            v_relative_mag_prev = np.linalg.norm(v_prev - np.dot(earth_rotation, p_prev))
-            # v_relative_mag_prev = np.linalg.norm(v_prev)    # v_mag_prev = v_relative_mag_prev
+            # v_relative_mag_prev = np.linalg.norm(v_prev - np.dot(earth_rotation, p_prev))
+            v_relative_mag_prev = np.linalg.norm(v_prev)    # v_mag_prev = v_relative_mag_prev
             normal_prev = np.array([v_prev[1],v_prev[0]])
 
 
@@ -107,8 +107,8 @@ def sim_run141123(sim, planet, craft):
 
             r = np.linalg.norm(p)
             rho = planet.density(planet.altitude(p))
-            # v_relative_mag = np.linalg.norm(v)        # v_relative_mag_prev
-            v_relative_mag = np.linalg.norm(v - np.dot(earth_rotation, p))
+            v_relative_mag = np.linalg.norm(v)        # v_relative_mag_prev
+            # v_relative_mag = np.linalg.norm(v - np.dot(earth_rotation, p))
             normal = np.array([v[1], v[0]])
 
             # aerodynamic acceleration
