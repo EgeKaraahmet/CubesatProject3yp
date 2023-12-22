@@ -1,4 +1,5 @@
-function [A, B] = CubeSatStateJacobianFcn(x,u)
+function dxdt = CubeSatStateFcn(x,u)
+%
 % x: (1) h: altitude 
 %    (2) X: distance travelled
 %    (3) V: velocity 
@@ -13,7 +14,7 @@ function [A, B] = CubeSatStateJacobianFcn(x,u)
 
 %constants
 mi=398600.44;                  %km^3/s^2   % Earth G*M
-GM = mi*1e9;
+m = 6;                         % kg
 Re=6371.0088 * 10^3;           %m         % Earth mean radius 
 g0=9.80665;                    %m/s^2      % Gravitational acceleration (sea level)
 Cd = 2.2;
@@ -41,30 +42,18 @@ end
 %% Gravity acceleration 
 grav = mi*1e9 / (Re+h)^2;
 
-%% Jacobian 
-df3dh = 0.5 * rho * (Cd/m/SH) * u - 2 * grav * sin(gamma) / (Re+h); 
-df3dV = -rho * (Cd/m) * V; 
-df3dgamma = grav * cos(gamma); 
-df3du = -0.5*rho*V^2*Cd/m; 
-
-df4dh = -V*cos(gamma)/((Re+h)^2);
-df4dV = cos(gamma)/(Re+h);
-df4dgamma = -V*sin(gamma)/(Re+h);
-
-df5dh = cos(gamma) * ((V^2*(h+Re)-2*GM)/V*(h+Re)^3);
-df5dV = -cos(gamma) * (Gm + V^2*(h+Re))/(V^2*(h+Re)^2);
-df5dgamma = -grav/V*sin(gamma) + V*sin(gamma)/(Re+h);
+%% d(state)/dt
+doth = -V*sin(gamma);
+dotX = -V*cos(gamma);
+dotV = -0.5*rho*V^2*Cd*u/m + grav * sin(gamma);
+dottheta = V * cos(gamma) / (Re+h); 
+dotgamma = grav/V*cos(gamma) - dottheta; 
 
 
+dxdt = [doth;
+        dotX;
+        dotV;
+        dottheta;
+        dotgamma;];
 
-A = [   0      0  -sin(gamma)   0        0        ;
-        0      0  -cos(gamma)   0        0        ;
-      df3dh    0    df3dV       0    df3dgamma    ;
-      df4dh    0    df4dV       0    df4dgamma    ;
-      df5dh    0    df5dV       0    df5dgamma    ]; 
 
-B = [ 0;
-      0;
-     df3du;
-      0;
-      0];

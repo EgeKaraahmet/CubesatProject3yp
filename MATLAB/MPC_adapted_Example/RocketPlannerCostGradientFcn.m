@@ -3,5 +3,5 @@ function [Gx, Gmv] = RocketPlannerCostGradientFcn(stage,x,u)
 
 % Copyright 2020 The MathWorks, Inc.
 
-Gx = zeros(5,1);
-Gmv = ones(1,1);
+Gx = zeros(6,1);
+Gmv = ones(2,1);

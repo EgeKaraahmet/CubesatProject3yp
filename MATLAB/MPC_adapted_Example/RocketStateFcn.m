@@ -4,23 +4,29 @@ function dxdt = RocketStateFcn(x,u)
 % center.  Tilting (theta) is defined as positive to left and negative to
 % the right (0 means robot is vertical).
 %
-% x: (1) h: altitude 
-%    (2) X: distance travelled
-%    (3) V: velocity 
-%    (4) Vx: horizontal velocity 
-%    (5) Vy: verti velocity 
-%    (6) gamma: flight path angle
-%    (7) theta: true anomaly 
+% x: (1) x position of the center of gravity in m
+%    (2) y position of the center of gravity in m
+%    (3) theta (tilt with respect to the center of gravity) in radian
+%    (4) dxdt
+%    (5) dydt
+%    (6) dthetadt
 %
-% u: fin areas
+% u: (1) thrust on the left, in Newton
+%    (2) thrust on the right, in Newton
 %
 % The continuous-time model is valid only if the rocket above or at the
 % ground (y>=10).
 
+% Copyright 2020 The MathWorks, Inc.
 
-m = 6;     % mass of CubeSat (kg)   
-g = 9.81;  % gravity (m/s^2)
-
+% mass of rocket (kg)
+m = 1;
+% center of gravity to top/bottom end (m)
+L1 = 10;
+% center of gravity to left/right thrust (m)
+L2 =  5;      
+% gravity (m/s^2)
+g = 9.806;
 % inertia for a flat disk
 I = 0.5*m*L1^2;
 % get force and torgue

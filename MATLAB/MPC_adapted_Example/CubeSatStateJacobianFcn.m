@@ -10,9 +10,10 @@ function [A, B] = CubeSatStateJacobianFcn(x,u)
 % The continuous-time model is valid only if the rocket above or at the
 % ground (y>=10).
 
-
+Ts = 0.2; 
 %constants
 mi=398600.44;                  %km^3/s^2   % Earth G*M
+m = 6;                         % kg
 GM = mi*1e9;
 Re=6371.0088 * 10^3;           %m         % Earth mean radius 
 g0=9.80665;                    %m/s^2      % Gravitational acceleration (sea level)
@@ -41,6 +42,7 @@ end
 %% Gravity acceleration 
 grav = mi*1e9 / (Re+h)^2;
 
+
 %% Jacobian 
 df3dh = 0.5 * rho * (Cd/m/SH) * u - 2 * grav * sin(gamma) / (Re+h); 
 df3dV = -rho * (Cd/m) * V; 
@@ -52,7 +54,7 @@ df4dV = cos(gamma)/(Re+h);
 df4dgamma = -V*sin(gamma)/(Re+h);
 
 df5dh = cos(gamma) * ((V^2*(h+Re)-2*GM)/V*(h+Re)^3);
-df5dV = -cos(gamma) * (Gm + V^2*(h+Re))/(V^2*(h+Re)^2);
+df5dV = -cos(gamma) * (GM + V^2*(h+Re))/(V^2*(h+Re)^2);
 df5dgamma = -grav/V*sin(gamma) + V*sin(gamma)/(Re+h);
 
 
@@ -68,3 +70,16 @@ B = [ 0;
      df3du;
       0;
       0];
+
+
+%% Jordan Canonical Form 
+[V_A, J_A] = jordan(A);
+I = eye(5,5); 
+V_inverse = V_A \ I; 
+J_A_inverse = J_A \ I; 
+
+
+%% Discrete form 
+Ad = V_A * expm(J_A*Ts)*V_inverse; 
+Bd = V * (Ts*J_A_inverse - I) * V_inverse * B; 
+

@@ -7,156 +7,28 @@
 % * The goal position is at (0,0). 
 % * The maximum thrust applied by each thruster can be preconfigured.
 % * The rocket can have an arbitrary initial position and orientation. 
-% Initialisation 
-x0 = [200;60;0;0;0;0;0];  
-u0 = 0;
 
-%% Obtain Nonlinear Dynamic Model of the Rocket
-% The first-principle nonlinear dynamic model of the rocket has 7 states
-% and 1 inputs. Both inputs are manipulated variables.
 %%
 % States:
 %
 % x: (1) h: altitude 
 %    (2) X: distance travelled
 %    (3) V: velocity 
-%    (4) Vx: horizontal velocity 
-%    (5) Vy: verti velocity 
-%    (6) gamma: flight path angle
-%    (7) theta: true anomaly 
+%    (4) theta: true anomaly
+%    (5) gamma: flight path angle
 %
-% Inputs:
-%  # fin areas 
-%%
-% The continuous-time model of the rocket is implemented with the
-% |RocketStateFcn| function. To speed up optimization, its analytical
-% Jacobian is manually derived in the |RocketStateJacobianFcn| function.
-% The model is valid only if the rocket is above or at the ground
-% ($y\ge10$).
-%
-% At run time, you assume that all the states are measurable and there is a
-% sensor reading that detects a rough landing (|-1|), soft landing (|1|),
-% or airborne (|0|) condition.
+% Input: 
+% u: fin areas
+%  
 
-%% Design Planner and Find Optimal Landing Path
- 
-% For trajectory optimization problems, the plant, cost function, and
-% constraints are often nonlinear. Therefore, you must formulate and solve
-% the planning problem using nonlinear MPC. You can pass the generated
-% optimal path to a path-following controller as a reference
-% signal, so that it can execute the planned maneuver.
-%
-% Compared to a generic nonlinear MPC controller, implemented using an
-% |nlmpc| object, multistage nonlinear MPC provides a more flexible and
-% efficient implementation with staged costs and constraints. This
-% flexibility and efficiency are especially useful for trajectory planning.
-%
-% A multistage nonlinear MPC controller with prediction horizon |p| defines
-% |p+1| stages, which represent times |k| (current time) through |k+p|. For
-% each stage, you can specify stage-specific cost, inequality constraint,
-% and equality constraint functions. Each function depends only on the
-% plant state and input values at the corresponding stage.
-% 
-% Given the current plant states, |x[k]|, the MPC controller finds the
-% manipulated variable (MV) trajectory (from time |k| to |k+p-1|) that
-% optimizes the summed stage costs (from time |k| to |k+p|) while
-% satisfying all the stage constraints (from time |k| to |k+p|).
-%
-% In this example, select the prediction horizon |p| and sample time |Ts|
-% such that the prediction time is |p*Ts = 10| seconds.
-Ts = 0.2;
-pPlanner = 50;
+%% Initialisation 
+x0 = [200*10^3;0;7788;0;0];  
+u0 = 0.5;
 
-%%
-% Create a multistage nonlinear MPC controller for the specified prediction
-% horizon and sample time.
-planner = nlmpcMultistage(pPlanner,7,1);
-planner.Ts = Ts;
+Ts = 0.2; 
+%cpLander = size(h_reference_signal);
+pLander = 50; % pLander = pLander(1)
 
-%%
-% Specify prediction model and its analytical Jacobian.
-planner.Model.StateFcn = 'RocketStateFcn_testing';
-planner.Model.StateJacFcn = 'RocketStateJacobianFcn_testing';
-
-%% 
-% Specify hard bounds on the two thrusters. You can adjust the maximum
-% thrust and observe its impact on the landing strategy chosen by the
-% planner. Typical maximum values are between 6 and 10 Newtons. If the
-% maximum thrust is too small, you might not be able to land the rocket
-% successfully if the initial position is challenging.
-planner.MV(1).Min = 0;
-planner.MV(1).Max = 8; 
-planner.MV(2).Min = 0;
-planner.MV(2).Max = 8;
-
-%% 
-% To avoid crashing, specify a hard lower bound on the vertical Y position.
-planner.States(2).Min = 10;
-
-%% 
-% There are different factors that you can include in your cost function.
-% For example, you can minimize time, fuel consumption, or landing speed.
-% For this example, you define a cost function that optimizes fuel
-% consumption by minimizing the sum of the thrust values. To improve
-% efficiency, you also supply the analytical Jacobian function for the
-% cost.
-%
-% Use the same cost function for all stages. Since MVs are only valid from
-% stage 1 to stage |p|, you do not need to define a stage cost for the
-% final stage, |p+1|.
-for ct=1:pPlanner
-    planner.Stages(ct).CostFcn = 'RocketPlannerCostFcn_testing';
-    planner.Stages(ct).CostJacFcn = 'RocketPlannerCostGradientFcn_testing';
-end
-
-%% 
-% To ensure a successful landing at the target, specify terminal state for
-% the final stage. 
-planner.Model.TerminalState = [0;10;0;0;0;0];
-
-%% 
-% In this example, set the maximum number of iterations to a large value
-% to accommodate the large search space and the nonideal default initial
-% guess.
-planner.Optimization.SolverOptions.MaxIterations = 1000;
-
-%% 
-% After creating you nonlinear MPC controller, check whether there is any
-% problem with your state, cost, and constraint functions, as well as their
-% analytical Jacobian functions. To do so, call |validateFcns| functions
-% with random initial plant states and inputs.
-validateFcns(planner,rand(6,1),rand(2,1));
-
-%%
-% Compute the optimal landing path using |nlmpcmove|, which can typically
-% take a few seconds, depending on the initial rocket position.
-fprintf('Rocker landing planner running...\n');
-tic;
-[~,~,info] = nlmpcmove(planner,x0,u0);
-t=toc;
-fprintf('Calculation Time = %s\n',num2str(t));
-fprintf('Objective cost = %s',num2str(info.Cost));
-fprintf('ExitFlag = %s',num2str(info.Iterations));
-fprintf('Iterations = %s\n',num2str(info.Iterations));
-
-%%
-% Extract the optimal trajectory from the |info| structure and plot the
-% result.
-figure
-subplot(2,1,1)
-plot(info.Xopt(:,1),info.Xopt(:,2),'*')
-title('Optimal XY Trajectory')
-subplot(2,1,2)
-plot(info.Topt,info.MVopt(:,1),info.Topt,info.MVopt(:,2))
-title('Optimal MV Trajectory')
-
-%% 
-% Animate the planned optimal trajectory.
-plotobj = RocketAnimation(6,2);
-for ct=1:pPlanner+1
-    updatePlot(plotobj,(ct-1)*planner.Ts,info.Xopt(ct,:),info.MVopt(ct,:));
-    pause(0.1);
-end
 
 %% Design Lander and Follow the Optimal Path
 % Like generic nonlinear MPC, you can use multistage nonlinear MPC for
@@ -164,20 +36,18 @@ end
 % to track the optimal trajectory found by the planner. For a
 % path-following problem, the lander does not require a long prediction
 % horizon. Create the controller.
-pLander = 10;
-lander = nlmpcMultistage(pLander,6,2);
+
+lander = nlmpcMultistage(pLander,5,1);
 lander.Ts = Ts;
 
 %%
 % For the path-following controller, the lander has the same prediction
 % model, thrust bounds, and minimum Y position.
-lander.Model.StateFcn = 'RocketStateFcn_testing';
-lander.Model.StateJacFcn = 'RocketStateJacobianFcn_testing';
+lander.Model.StateFcn = 'CubeSatStateFcn';
+lander.Model.StateJacFcn = 'CubeSatStateJacobianFcn';
 lander.MV(1).Min = 0;
-lander.MV(1).Max = 8;
-lander.MV(2).Min = 0;
-lander.MV(2).Max = 8;
-lander.States(2).Min = 10;
+lander.MV(1).Max = 0.5;
+lnader.States(1).Min = 0; 
 
 %%
 % The cost function for the lander is different from that of the planner.
@@ -195,7 +65,7 @@ lander.States(2).Min = 10;
 for ct=1:pLander+1
     lander.Stages(ct).CostFcn = 'RocketLanderCostFcn_testing';
     lander.Stages(ct).CostJacFcn = 'RocketLanderCostGradientFcn_testing';
-    lander.Stages(ct).ParameterLength = 6;
+    lander.Stages(ct).ParameterLength = 5;
 end
 
 %%
@@ -207,7 +77,7 @@ lander.UseMVRate = true;
 %%
 % Validate the controller design.
 simdata = getSimulationData(lander);
-validateFcns(lander,rand(6,1),rand(2,1),simdata);
+validateFcns(lander,rand(5,1),rand(1,1),simdata);
 
 %%
 % Simulate the landing maneuver in a closed-loop control scenario by
@@ -217,7 +87,7 @@ validateFcns(lander,rand(6,1),rand(2,1),simdata);
 x = x0;
 u = u0;
 k = 1;
-references = reshape(info.Xopt',(pPlanner+1)*6,1); % Extract reference signal as column vector.
+references = reshape(info.Xopt',(pPlanner+1)*5,1); % Extract reference signal as column vector.
 while true
     % Obtain new reference signals.
     simdata.StageParameter = RocketLanderReferenceSignal(k,references,pLander);
