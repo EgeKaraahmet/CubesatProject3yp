@@ -1,4 +1,4 @@
-function dxdt = CubeSatStateFcn(x,u)
+function dxdt = CubeSatStateFcn_testing(x,u)
 %
 % x: (1) h: altitude 
 %    (2) X: distance travelled

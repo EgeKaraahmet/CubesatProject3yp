@@ -25,9 +25,9 @@
 x0 = [200*10^3;0;7788;0;0];  
 u0 = 0.5;
 
-Ts = 0.2; 
+Ts = 1; 
 %cpLander = size(h_reference_signal);
-pLander = 50; % pLander = pLander(1)
+pLander = 1; % pLander = pLander(1)
 
 
 %% Design Lander and Follow the Optimal Path
@@ -43,9 +43,9 @@ lander.Ts = Ts;
 %%
 % For the path-following controller, the lander has the same prediction
 % model, thrust bounds, and minimum Y position.
-lander.Model.StateFcn = 'CubeSatStateFcn';
-lander.Model.StateJacFcn = 'CubeSatStateJacobianFcn';
-lander.MV(1).Min = 0;
+lander.Model.StateFcn = 'CubeSatStateFcn_testing';
+lander.Model.StateJacFcn = 'CubeSatStateJacobianFcn_testing';
+lander.MV(1).Min = 0.2;
 lander.MV(1).Max = 0.5;
 lnader.States(1).Min = 0; 
 

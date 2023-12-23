@@ -18,7 +18,7 @@ class Planet(object):
         self.grav_k = grav_k
 
     def gravity(self, r):
-        return -(self.grav_k / (r ** 2.0))
+        return self.grav_k / (r ** 2.0)
 
     def altitude(self, pos):
         return np.linalg.norm(pos) - self.radius
@@ -76,7 +76,7 @@ def sim_run141123(sim, planet, craft):
     ld = craft['lift_drag']
 
     w = 7.2921159 * 1e-5
-    earth_rotation = np.array([[0, w], [-w, 0]])
+
 
     # (doesn't take parachute into acount -- decent would slow down then)
     k = 0
@@ -88,10 +88,8 @@ def sim_run141123(sim, planet, craft):
             v_prev = v
             r_prev = np.linalg.norm(p_prev)
             rho_prev = planet.density(planet.altitude(p_prev))
-            # v_relative_mag_prev = np.linalg.norm(v_prev - np.dot(earth_rotation, p_prev))
-            v_relative_mag_prev = np.linalg.norm(v_prev)    # v_mag_prev = v_relative_mag_prev
+            v_relative_mag_prev = np.linalg.norm(v_prev)
             normal_prev = np.array([v_prev[1],v_prev[0]])
-
 
             # aerodynamic acceleration
             aero_accel_prev = 0.5 * rho_prev * v_relative_mag_prev * (ld * normal_prev / beta - v_prev / beta)
@@ -99,7 +97,7 @@ def sim_run141123(sim, planet, craft):
             # gravitational acceleration
             gravity_accel_prev = planet.gravity(r_prev) * (p_prev / r_prev)
 
-            a_prev = aero_accel_prev + gravity_accel_prev
+            a_prev = aero_accel_prev - gravity_accel_prev
 
             # Improved Euler's method
             p = p_prev + v_prev * dt
@@ -117,7 +115,7 @@ def sim_run141123(sim, planet, craft):
             # gravitational acceleration
             gravity_accel = planet.gravity(r) * (p / r)
 
-            a = aero_accel + gravity_accel
+            a = aero_accel - gravity_accel
             ax[k], ay[k] = a
 
             v = v_prev + 0.5 * (a_prev + a) * dt

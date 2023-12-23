@@ -1,4 +1,4 @@
-function [A, B] = CubeSatStateJacobianFcn(x,u)
+function [A, B] = CubeSatStateJacobianFcn_testing(x,u)
 % x: (1) h: altitude 
 %    (2) X: distance travelled
 %    (3) V: velocity 
