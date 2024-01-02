@@ -9,11 +9,13 @@ close all
 
 %% Initial conditions 
 % Input 
+A=(15e-2)^2;            %m^2        % spacecraft cross - sectional area
+
+% constant 
 m = 6;                    %kg         % spacecraft mass  m = 3 for ISS
-A=(10e-2)^2;            %m^2        % spacecraft cross - sectional area
 Cd=2.2;                             % drag coefficient
 BC = m / Cd / A; 
-BC = 122; 
+
 
 
 %constants
