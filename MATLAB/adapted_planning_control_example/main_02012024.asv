@@ -5,7 +5,7 @@ clc
 
 %% Initial conditions 
 % Input 
-A=100*10^(-4);          %m^2        % spacecraft cross - sectional area
+A=125*10^(-4);          %m^2        % spacecraft cross - sectional area
 
 % constant 
 m = 6;                  %kg         % spacecraft mass  m = 3 for ISS
@@ -144,17 +144,15 @@ Q  = [30; 30; 0; 0; 0];     % State Weight Matrix.
 R  = 10;                   % Control Weighting Matrix.
 
 
-p  = 20;                    % Prediction Horizon.
-Ts = 1000;                  % Sampling time 
-
+p  = 40;                    % Prediction Horizon.
 xf = [h_end; x_end; V_end; theta_end; gamma_end];       % Terminal State.
 
 % Combine stage parameters into a column array.
 pvcost = [xf; Sf; Q; R; p];
 
 % Define initial conditions
-x_op_0 = [h0;X0;V0;theta0;gamma0]; 
-% x_op_0 = [200*10^3;0;7788;0;0]; 
+% x_op_0 = [h0;X0;V0;theta0;gamma0]; 
+x_op_0 = [200*10^3;0;7788;0;0]; 
 
 
 
@@ -164,6 +162,8 @@ nx  = 5;
 nmv = 1;
 msobj = nlmpcMultistage(p,nx,nmv);
 
+
+Ts = 100000;
 msobj.Ts = Ts;
 
 %% Specify the prediction model state using the CubeSat dynamics functions.

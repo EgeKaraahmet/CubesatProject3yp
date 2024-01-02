@@ -1,4 +1,5 @@
 function J = CubeSatCostFcn_OptimalPath(stage, x, u)
+   
 
   
     h = x(1);
@@ -27,15 +28,8 @@ function J = CubeSatCostFcn_OptimalPath(stage, x, u)
     rho = 1.225 * exp(- h/(SH));    % my Python model, using SH = 8.43 and rho0=1.221 as constant
     q_max=1.83e-4*V.^3.*sqrt(rho/rcurv);
 
-    %
-    if stage == p + 1
-        % Calculate cost for the terminal stage
-        J = 0.5*(R - R_ref).'*Sf*(R - R_ref);
-    else
-        % Calculate cost for intermediate stages
-        J = 0.5*(R - R_ref).'*Q*(R - R - R_ref) + (q_max - q_ref) * Q *(q_max-q_ref);
-    end
+   
     % Cost function
-    % J = (R - R_ref)' * P * (R - R_ref) + (q_max - q_ref) * Q *(q_max-q_ref);
+    J = (R - R_ref)' * P * (R - R_ref) + (q_max - q_ref) * Q *(q_max-q_ref);
 end
 
