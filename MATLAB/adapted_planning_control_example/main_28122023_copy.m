@@ -123,6 +123,8 @@ theta_reference_signal=[kepOut.theta;atmOut.theta];
 rho_reference_signal=[kepOut.rho;atmOut.rho];
 dotV_reference_signal=[kepOut.dotV;atmOut.dotV];
 
+plot(x_reference_signal,h_reference_signal,'b')
+
 %% Trajectory Planning
 % The robot initially rests at |[-10,-10]| with an orientation angle of
 % |pi/2| radians (facing north). The flying maneuver for this example is to
@@ -140,7 +142,7 @@ dotV_reference_signal=[kepOut.dotV;atmOut.dotV];
 % specify a sample time of |0.4| seconds and prediction horizon of |30|
 % steps. Create a multistage nonlinear MPC object with |5| states and |1|
 % inputs. By default, all the inputs are manipulated variables (MVs).
-Ts = 2000;
+Ts = 20000;
 p = 10;
 nx = 5;
 nu = 1;
@@ -183,10 +185,9 @@ for ct = 1:p
 end
 
 %% 
+%x_op_t = [0;x_end;V_end;theta_end;gamma_end];
 % nlobj.Model.TerminalState = zeros(5,1); 
-
-x_op_t = [0;x_end;V_end;theta_end;gamma_end];
-nlobj.Model.TerminalState = x_op_t;
+%nlobj.Model.TerminalState = x_op_t;
 
 
 %% constraints 
@@ -216,87 +217,11 @@ validateFcns(nlobj,x_op_0,u0);
 % The optimal cost and trajectories are returned as part of the |info|
 % output argument.
 
-% [~,~,info] = nlmpcmove(nlobj,x_op_0,u0);
-%%
-%% Initialize data structure
-% The state and stage functions require state and stage parameters. 
-% Use getSimulationData to initialize data structure. 
-simdata = getSimulationData(nlobj);
-% simdata.StateFcnParameter = pvstate;
-% simdata.StageParameter = repmat(pvcost, p+1, 1);
-
-%% Setting the Optimization Solver: conjugate gradient method
-nlobj.Optimization.Solver = "cgmres";
-% Adjust the Stabilization Parameter 
-% based on the prediction model sample time.
-nlobj.Optimization.SolverOptions.StabilizationParameter = 1/nlobj.Ts; % 1/mosbj.Ts
-
-% Set the solver parameters.
-nlobj.Optimization.SolverOptions.MaxIterations = 10;
-nlobj.Optimization.SolverOptions.Restart = 3;
-nlobj.Optimization.SolverOptions.BarrierParameter = 1e-3;
-nlobj.Optimization.SolverOptions.TerminationTolerance = 1e-6;
-
-
-%% Simulation duration in seconds.
-Duration = Ts * p;
-
-x0 = x_op_0; 
-u0 = 100 * 10^(-4); 
-
-
-% Store states and control for plotting purposes.
-xHistory1 = x0.';
-uHistory1 = u0.';
-
-% Initialize control.
-uk = uHistory1(1,:);
-
-% Initialize the accumulated elapsed time 
-% for computing the optimal control action calculation.
-timerVal1 = 0;
-
-% Simulation loop
-for k = 1:(Duration/Ts)
-    % Compute optimal control action using nlmpcmove.
-    xk = xHistory1(k,:).';
-    
-    % Call the nlmpcmove function.
-    tic
-    [uk, simdata] = nlmpcmove(nlobj, xk, uk, simdata);
-    
-    % Accumulate the elapsed time.
-    timerVal1 = timerVal1 + toc;
-
-    % Simulate CubeSat trajectory for the next control interval.
-    ODEFUN = @(t,xk) CubeSatStateFcn_25122023(xk,uk);
-    [TOUT, XOUT] = ode45(ODEFUN, [0 Ts], xHistory1(k,:));
-
-    % Log states and control.
-    xHistory1(k+1,:) = XOUT(end,:);
-    uHistory1(k+1,:) = uk;
-   
-
-    % Check for clicked Cancel button.
-    %if getappdata(hbar,"canceling")
-    %    delete(hbar)
-    %    break
-    % end
-end
-
+ [~,~,info] = nlmpcmove(nlobj,x_op_0,u0);
 
 %%
 % Plot the optimal trajectory. The optimal cost is 7.8.
-% Assuming h_plot is xHistory1(:,1)
-h_plot = xHistory1(:,1);
-X_plot = xHistory1(:,2);
-T_plot = TOUT;
-u_plot = uHistory1; 
-figure
-plot(X_plot,h_plot,'r')
-figure
-plot(x_reference_signal,h_reference_signal,'b')
-% CubeSatPlotPlanning_29122023(info,Ts);
+CubeSatPlotPlanning_29122023(info,Ts);
 
 %%
 % The first plot shows the optimal trajectory of the six robot states
@@ -520,6 +445,3 @@ FlyingRobotPlotTracking(info,Ts,p,Tsteps,xHistory,uHistory);
 % optimal control." _Optimal Control Applications and Methods_, Vol. 20,
 % 1999, pp. 235-248.
 %
-
-
-

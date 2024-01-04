@@ -12,17 +12,17 @@ function CubeSatPlotTracking(Xopt, Ts, Psteps, Tsteps, Xcl, Ucl)
         title(states{i})
     end
     
-    figure;
-    for i = 1
-        subplot(1, 1, i)
-        stairs(tt(1:end-1), Ucl(:, i))
-        title('Thrust u')
-        axis([0 tt(end) -0.1 1.1])
-        hold on
-        stairs(tp(1:end-1), info.MVopt(1:end-1, i))
-        legend('actual', 'plan')
-        hold off
-    end
+    % figure;
+    % for i = 1
+    %     subplot(1, 1, i)
+    %     stairs(tt(1:end-1), Ucl(:, i))
+    %     title('Thrust u')
+    %     axis([0 tt(end) -0.1 1.1])
+    %     hold on
+    %     stairs(tp(1:end-1), info.MVopt(1:end-1, i))
+    %     legend('actual', 'plan')
+    %     hold off
+    % end
     
     figure;
     hold on

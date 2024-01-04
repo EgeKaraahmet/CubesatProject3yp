@@ -26,7 +26,7 @@ function CubeSatPlotPlanning_29122023(Info,Ts)
     % Plot optimal trajectory with modified X values
     figure;
     X_modified = Xopt(:, 2);
-    X_modified(Xopt(:, 2) > 0) = -abs(Xopt(Xopt(:, 2) > 0, 2));
+    % X_modified(Xopt(:, 2) > 0) = -abs(Xopt(Xopt(:, 2) > 0, 2));
     plot(X_modified, Xopt(:, 1), 'o-') % plot h against X
     xlabel('X')
     ylabel('h')

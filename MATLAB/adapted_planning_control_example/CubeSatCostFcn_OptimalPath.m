@@ -11,17 +11,20 @@ function J = CubeSatCostFcn_OptimalPath(stage, x, u)
     R = [X; h + Re];
 
     % Desired position vector at an altitude of h* = 30 km
-    h_star = 27.4188 * 10^3; % 30 km in meters
-    X_star = -2551560; 
+    % h_star = 27.4188 * 10^3; % 30 km in meters --> A = 225 cm^2
+    % X_star = -2551560;    %% seems not correct --> A = 225 cm^2
+
+    h_star = 30 * 10^3;    %% @A=125cm^2
+    X_star = -4.5871*10^9; %% interpolation from x_ref, h_ref @ A=125cm^2
     R_ref = [X_star; h_star + Re];
     q_ref = 600 * 10^3; 
     rcurv = 0.1; 
 
     % Weighting matrix P and Q
     P = [5   0;
-         0   0.5];
+         0   5];
 
-    Q = 1; 
+    Q = 20; 
 
     % heat flux
     SH = 8397.5; 

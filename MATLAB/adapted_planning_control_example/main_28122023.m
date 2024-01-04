@@ -140,8 +140,8 @@ dotV_reference_signal=[kepOut.dotV;atmOut.dotV];
 % specify a sample time of |0.4| seconds and prediction horizon of |30|
 % steps. Create a multistage nonlinear MPC object with |5| states and |1|
 % inputs. By default, all the inputs are manipulated variables (MVs).
-Ts = 2000;
-p = 10;
+Ts = 500;
+p = 20;
 nx = 5;
 nu = 1;
 nlobj = nlmpcMultistage(p,nx,nu);
@@ -286,17 +286,36 @@ end
 
 
 %%
-% Plot the optimal trajectory. The optimal cost is 7.8.
+
+
 % Assuming h_plot is xHistory1(:,1)
 h_plot = xHistory1(:,1);
 X_plot = xHistory1(:,2);
 T_plot = TOUT;
 u_plot = uHistory1; 
+
+% Create a logical index to exclude negative values
+positive_indices = h_plot >= 0;
+
+% Filter the vectors using the logical index
+h_plot = h_plot(positive_indices);
+X_plot = X_plot(positive_indices);
+T_plot = T_plot(positive_indices);
+u_plot = u_plot(positive_indices);
+
 figure
 plot(X_plot,h_plot,'r')
 figure
 plot(x_reference_signal,h_reference_signal,'b')
 % CubeSatPlotPlanning_29122023(info,Ts);
+
+
+X_plot_end = X_plot(end);
+
+(x_end - floor(x_end/(2*pi*Re))*(2*pi*Re))/(2*pi*Re)
+
+
+(X_plot_end - floor(X_plot_end/(2*pi*Re))*(2*pi*Re))/(2*pi*Re)
 
 %%
 % The first plot shows the optimal trajectory of the six robot states

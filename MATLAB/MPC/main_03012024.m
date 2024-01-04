@@ -2,10 +2,19 @@ clear
 close all 
 clc
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Reference state generator 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Initial conditions 
 % Input 
-A=125*10^(-4);          %m^2        % spacecraft cross - sectional area
+A=100*10^(-4);          %m^2        % spacecraft cross - sectional area
 
 % constant 
 m = 6;                  %kg         % spacecraft mass  m = 3 for ISS
@@ -73,7 +82,7 @@ stop_h=stop_h*1000;             %m
 %Integration step: 30 s
 %First run stops when altitude reachesG stop_h threshold
 
-kepOut = sim('reference_signal_generator','Solver',solv_kep,'FixedStep',step_kep);
+kepOut = sim('reference_signal_generator_MPC','Solver',solv_kep,'FixedStep',step_kep);
 
 %   updating initial conditions, 2nd run using ouput from 1st
 
@@ -83,6 +92,8 @@ jdate=jdate+ndays1;                %new julian date at beginning of 2nd run
 F107_avg=90.85;         %SFU: updating
 F107_day=86.0;          %SFU: updating
 Kp=1;
+
+space_coes = [jdate;F107_avg;F107_day;Kp];
 
 %re-entry path initial values (at t=0 s)
 h0=kepOut.h(end);            %m        %height
@@ -100,7 +111,7 @@ X0 = x0;
 stop_h=0;   %m          %final desired altitude
 %%%%%%%%%%%%%%%%%%
 
-atmOut = sim('reference_signal_generator','Solver',solv_atm,'FixedStep',step_atm,'StartTime','kepOut.time(end)');
+atmOut = sim('reference_signal_generator_MPC','Solver',solv_atm,'FixedStep',step_atm,'StartTime','kepOut.time(end)');
 
 h_end=atmOut.h(end);         %m        %altitude
 x_end=atmOut.x(end);         %m        %travelled distance
@@ -109,7 +120,7 @@ theta_end=atmOut.theta(end);    %rad      %true anomaly
 gamma_end=atmOut.gamma(end);    %rad      %flight path angle
 
 
-%% Results analysis and plotting
+%% Results analysis
 %   union of 1st and 2nd run results
 
 h_reference_signal=[kepOut.h;atmOut.h];
@@ -131,28 +142,46 @@ dotV_reference_signal=[kepOut.dotV;atmOut.dotV];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% nonlinear MPC Controller 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %% Define Objective Cost Function Initial Values 
+% State x
 % x: (1) h: altitude 
 %    (2) X: distance travelled
 %    (3) V: velocity 
 %    (4) theta: true anomaly
 %    (5) gamma: flight path angle
+
+% input: 
+% u: fin areas 
+
 % Stage Parameters
 
-Sf = [20; 20; 0; 0; 0];     % Terminal Weight Matrix.
-Q  = [30; 30; 0; 0; 0];     % State Weight Matrix.
+Sf = [100; 100; 100; 100; 100];     % Terminal Weight Matrix.
+Q  = [30; 30; 30; 30; 30];     % State Weight Matrix.
 R  = 10;                   % Control Weighting Matrix.
+Q_heat = 50;               % Heat Flux Weight Matrix
+
+p  = 100;                    % Prediction Horizon.
+Ts = 100;                  % Sampling time 
+
+xf = [0; x_end; V_end; theta_end; gamma_end];       % Desired terminal State.
 
 
-p  = 40;                    % Prediction Horizon.
-xf = [h_end; x_end; V_end; theta_end; gamma_end];       % Terminal State.
 
+% xf = [target_h; target_X; target_V; target_theta; target_gamma];
 % Combine stage parameters into a column array.
-pvcost = [xf; Sf; Q; R; p];
+pvcost = [xf; Sf; Q; R; Q_heat; p;space_coes];
+
+
 
 % Define initial conditions
-% x_op_0 = [h0;X0;V0;theta0;gamma0]; 
-x_op_0 = [200*10^3;0;7788;0;0]; 
+x_op_0 = [h0;X0;V0;theta0;gamma0]; 
+% x_op_0 = [200*10^3;0;7788;0;0]; 
 
 
 
@@ -162,8 +191,6 @@ nx  = 5;
 nmv = 1;
 msobj = nlmpcMultistage(p,nx,nmv);
 
-
-Ts = 100000;
 msobj.Ts = Ts;
 
 %% Specify the prediction model state using the CubeSat dynamics functions.
@@ -173,7 +200,7 @@ msobj.Model.StateFcn = "CubeSatStateFcn_25122023";
 %% Specify this cost function using a named function
 % Setting cost function for each control interval.
 for k = 1:p+1
-    msobj.Stages(k).CostFcn = "CubeSatCostFcn_02012024";
+    msobj.Stages(k).CostFcn = "CubeSatCostFcn_03012024";
     msobj.Stages(k).ParameterLength = length(pvcost);
 end
 
@@ -194,7 +221,7 @@ simdata.StageParameter = repmat(pvcost, p+1, 1);
 msobj.Optimization.Solver = "cgmres";
 % Adjust the Stabilization Parameter 
 % based on the prediction model sample time.
-msobj.Optimization.SolverOptions.StabilizationParameter = 1/msobj.Ts; % 1/mosbj.Ts
+msobj.Optimization.SolverOptions.StabilizationParameter = 2/msobj.Ts; % 1/mosbj.Ts
 
 % Set the solver parameters.
 msobj.Optimization.SolverOptions.MaxIterations = 10;
@@ -242,35 +269,169 @@ for k = 1:(Duration/Ts)
     uHistory1(k+1,:) = uk;
    
 
-    % Check for clicked Cancel button.
-    %if getappdata(hbar,"canceling")
-    %    delete(hbar)
-    %    break
-    % end
+   
 end
 
 
-%%
+%% 
 % Assuming h_plot is xHistory1(:,1)
 h_plot = xHistory1(:,1);
 X_plot = xHistory1(:,2);
+V_plot = xHistory1(:,3);
+theta_plot = xHistory1(:,4);
+gamma_plot = xHistory1(:,5);
 T_plot = TOUT;
 u_plot = uHistory1; 
 
-% Create a logical index to exclude negative values
-%positive_indices = h_plot >= 0;
+% % % Create a logical index to exclude negative values
+positive_indices = h_plot >= 0;
+% % 
+% % % Filter the vectors using the logical index
+h_plot = h_plot(positive_indices);
+X_plot = X_plot(positive_indices);
+V_plot = V_plot(positive_indices);
+theta_plot = theta_plot(positive_indices);
+gamma_plot = gamma_plot(positive_indices);
+T_plot = T_plot(positive_indices);
+u_plot = u_plot(positive_indices);
 
-% Filter the vectors using the logical index
-%h_plot = h_plot(positive_indices);
-%X_plot = X_plot(positive_indices);
-%T_plot = T_plot(positive_indices);
-%u_plot = u_plot(positive_indices);
+x_plot_out = [h_plot X_plot V_plot theta_plot gamma_plot];
 
-
-
+h_reference_atm = [atmOut.h];
+x_reference_atm = [atmOut.x];
 %%
 figure
 plot(X_plot,h_plot,'r')
+title('Nonlinear MPC output')
 figure
-plot(x_reference_signal,h_reference_signal,'b')
+plot(x_reference_atm,h_reference_atm,'b')
+title('Reference plot')
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% nonlinear MPC Controller 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Feedback Control for Path Following
+% After the optimal trajectory is found, a feedback controller is required
+% to move the robot along the path. In theory, you can apply the optimal MV
+% profile directly to the thrusters to implement feed-forward control.
+% However, in practice, a feedback controller is needed to reject
+% disturbances and compensate for modeling errors.
+%
+% You can use different feedback control techniques for tracking. In this
+% example, you use a generic nonlinear MPC controller to move the robot to
+% the final location. In this path tracking problem, you track references
+% for all six states (the number of outputs equals the number of states).
+ny = 5;
+msobj_tracking = nlmpc(nx,ny,nmv);
+
+%%
+% Use the same state function and its Jacobian function.
+msobj_tracking.Model.StateFcn = msobj.Model.StateFcn;
+
+%%
+% For tracking control applications, reduce the computational effort by
+% specifying shorter prediction horizon (no need to look far into the
+% future) and control horizon (for example, free moves are allocated at the
+% first few prediction steps).
+msobj_tracking.Ts = Ts;
+msobj_tracking.PredictionHorizon = 10;
+msobj_tracking.ControlHorizon = 4;
+
+%%
+% The default cost function in nonlinear MPC is a standard quadratic cost
+% function suitable for reference tracking and disturbance rejection. For
+% tracking, tracking error has higher priority (larger penalty weights on
+% outputs) than control efforts (smaller penalty weights on MV rates).
+msobj_tracking.Weights.ManipulatedVariablesRate = 0.2*ones(1,nmv);
+msobj_tracking.Weights.OutputVariables = 5*ones(1,nx);
+
+%%
+% Set the same bounds for the thruster inputs.
+msobj_tracking.MV.Min = 100 * 10^(-4);
+msobj_tracking.MV.Max = 150 * 10^(-4);
+
+
+%%
+
+%% Nonlinear State Estimation
+% In this example, only the three position states (x, y and angle) are
+% measured. The velocity states are unmeasured and must be estimated. Use
+% an extended Kalman filter (EKF) from Control System Toolbox(TM) for
+% nonlinear state estimation.
+%
+% Because an EKF requires a discrete-time model, you use the trapezoidal
+% rule to transition from x(k) to x(k+1), which requires the solution of
+% |nx| nonlinear algebraic equations. For more information, open
+% |FlyingRobotStateFcnDiscreteTime.m|.
+DStateFcn = @(xk,uk,Ts) CubeSatStateFcnDiscreteTime_25122023(xk,uk,Ts);
+
+%%
+% Measurement can help the EKF correct its state estimation
+DMeasFcn = @(xk) xk(1:5);
+
+%%
+% Create the EKF, and indicate that the measurements have little noise.
+EKF = extendedKalmanFilter(DStateFcn,DMeasFcn,x0);
+EKF.MeasurementNoise = 0.01;
+
+%% Closed-Loop Simulation of Tracking Control
+% Simulate the system for |32| steps with correct initial conditions.
+Tsteps = 32;
+xHistory_kmf = x0';
+uHistory_kmf = [];
+lastMV = zeros(nmv,1);
+
+%%
+% The reference signals are the optimal state trajectories computed at the
+% planning stage. When passing these trajectories to the nonlinear MPC
+% controller, the current and future trajectory is available for
+% previewing.
+Xopt_kmf = x_plot_out;
+[p_kmf,~] = size(Xopt_kmf);
+% Xref_kmf = [Xopt_kmf(1:p_kmf,:);repmat(Xopt_kmf(end,:),Tsteps-p_kmf,1)];
+Xref_kmf = x_plot_out; 
+
+%%
+% Use |nlmpcmove| and |nlmpcmoveopt| command for closed-loop simulation.
+hbar = waitbar(0,'Simulation Progress');
+options = nlmpcmoveopt;
+
+for k = 1:Tsteps
+
+    % Obtain plant output measurements with sensor noise.
+    yk = xHistory_kmf(k,1:3)' + randn*0.01;
+    
+    % Correct state estimation based on the measurements.
+    xk = correct(EKF, yk);
+    
+    % Compute the control moves with reference previewing.
+    [uk,options] = nlmpcmove(msobj_tracking,xk,lastMV,Xref_kmf(k:min(k+9,Tsteps),:),[],options);
+    
+    % Predict the state for the next step.
+    predict(EKF,uk,Ts);
+    
+    % Store the control move and update the last MV for the next step.
+    uHistory_kmf(k,:) = uk'; %#ok<*SAGROW>
+    lastMV = uk;
+    
+    % Update the real plant states for the next step by solving the
+    % continuous-time ODEs based on current states xk and input uk.
+    ODEFUN = @(t,xk) CubeSatStateFcn_25122023(xk,uk);
+    [TOUT,YOUT] = ode45(ODEFUN,[0 Ts], xHistory_kmf(k,:)');
+    
+    % Store the state values.
+    xHistory_kmf(k+1,:) = YOUT(end,:);
+    
+    % Update the status bar.
+    waitbar(k/Tsteps, hbar);
+end
+close(hbar)
+
+%%
 

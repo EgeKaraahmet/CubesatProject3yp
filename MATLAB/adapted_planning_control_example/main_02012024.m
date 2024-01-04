@@ -144,8 +144,8 @@ Q  = [30; 30; 0; 0; 0];     % State Weight Matrix.
 R  = 10;                   % Control Weighting Matrix.
 
 
-p  = 20;                    % Prediction Horizon.
-Ts = 1000;                  % Sampling time 
+p  = 40;                    % Prediction Horizon.
+Ts = 10000;                  % Sampling time 
 
 xf = [h_end; x_end; V_end; theta_end; gamma_end];       % Terminal State.
 
@@ -154,7 +154,7 @@ pvcost = [xf; Sf; Q; R; p];
 
 % Define initial conditions
 x_op_0 = [h0;X0;V0;theta0;gamma0]; 
-% x_op_0 = [200*10^3;0;7788;0;0]; 
+x_op_0 = [200*10^3;0;7788;0;0]; 
 
 
 
@@ -258,13 +258,13 @@ T_plot = TOUT;
 u_plot = uHistory1; 
 
 % Create a logical index to exclude negative values
-%positive_indices = h_plot >= 0;
+positive_indices = h_plot >= 0;
 
 % Filter the vectors using the logical index
-%h_plot = h_plot(positive_indices);
-%X_plot = X_plot(positive_indices);
-%T_plot = T_plot(positive_indices);
-%u_plot = u_plot(positive_indices);
+h_plot = h_plot(positive_indices);
+X_plot = X_plot(positive_indices);
+T_plot = T_plot(positive_indices);
+u_plot = u_plot(positive_indices);
 
 
 
