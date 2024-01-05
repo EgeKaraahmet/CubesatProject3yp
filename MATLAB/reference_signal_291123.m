@@ -6,10 +6,11 @@
 % -Exponential atmosphere [0 to 100 km of altitude]
 clear
 close all
+clc
 
 %% Initial conditions 
 % Input 
-A=(15e-2)^2;            %m^2        % spacecraft cross - sectional area
+A=125 * 10^(-4);          %m^2        % spacecraft cross - sectional area
 
 % constant 
 m = 6;                    %kg         % spacecraft mass  m = 3 for ISS
@@ -147,6 +148,7 @@ end
 %time to deorbit
 % nyears=time(end)/3.154e+7;
 % fprintf('Total time to de-orbit: %3.2f years\n',nyears)
+fprintf('Fin area: %3.2f cm^2\n',A*10^4)
 
 ndays=time_reference_signal(end)/3.154e+7*365;
 fprintf('Total time to de-orbit: %3.2f days\n',ndays)

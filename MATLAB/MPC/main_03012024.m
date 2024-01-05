@@ -1,6 +1,10 @@
 clear
 clc
 close all
+%% 
+% Initial A = 135 cm^2,    Radius = 150 km 
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -13,7 +17,7 @@ close all
 
 %% Initial conditions 
 % Input 
-A=142*10^(-4);          %m^2        % spacecraft cross - sectional area
+A=125*10^(-4);          %m^2        % spacecraft cross - sectional area
 
 % constant 
 m = 6;                  %kg         % spacecraft mass  m = 3 for ISS
@@ -164,7 +168,7 @@ x_state_reference = [atmOut.h, atmOut.x, atmOut.V, atmOut.theta, atmOut.gamma];
 Sf = [100; 100; 100; 100; 100];     % Terminal Weight Matrix.
 Q  = [30; 30; 30; 30; 30];     % State Weight Matrix.
 R  = 10;                   % Control Weighting Matrix.
-Q_heat = 50;               % Heat Flux Weight Matrix
+Q_heat = 10000;               % Heat Flux Weight Matrix
 
 p  = 100;                    % Prediction Horizon.
 Ts = 100;                  % Sampling time 
@@ -299,9 +303,12 @@ x_plot_out = [h_plot X_plot V_plot theta_plot gamma_plot];
 
 h_reference_atm = [atmOut.h];
 x_reference_atm = [atmOut.x];
+
+[p_op,~] = size(h_plot);
 %%
 % Plotting using zero-order hold
 figure
+subplot(1,3,1)
 n = 1:length(u_plot);
 stairs(n, u_plot, 'b-', 'LineWidth', 2);
 
@@ -310,13 +317,15 @@ ylabel('u');
 title('Zero-Order Hold Plot');
 
 
-figure
+subplot(1,3,2)
 plot(X_plot, h_plot, 'r', x_reference_atm, h_reference_atm, 'b')
 title('Nonlinear MPC output')
 
 % Adding legend
 legend('Nonlinear MPC output (red)', 'Reference altitude vs. distance (blue)')
 
+
+A_target = u_plot(end);   %m^2        % spacecraft cross - sectional area
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -358,8 +367,8 @@ msobj_tracking.ControlHorizon = 4;
 % function suitable for reference tracking and disturbance rejection. For
 % tracking, tracking error has higher priority (larger penalty weights on
 % outputs) than control efforts (smaller penalty weights on MV rates).
-msobj_tracking.Weights.ManipulatedVariablesRate = 20*ones(1,nmv);
-msobj_tracking.Weights.OutputVariables = 50*ones(1,ny);
+msobj_tracking.Weights.ManipulatedVariablesRate = 10; 
+msobj_tracking.Weights.OutputVariables = 100*ones(1,ny);
 
 %%
 % Set the same bounds for the thruster inputs.
@@ -368,9 +377,10 @@ msobj_tracking.MV.Max = 150 * 10^(-4);
 
 
 %%
+validateFcns(msobj_tracking,x0,u0);
 
 %% Nonlinear State Estimation
-% In this example, only the three position states (x, y and angle) are
+% In this example, only the position states (h,X) are
 % measured. The velocity states are unmeasured and must be estimated. Use
 % an extended Kalman filter (EKF) from Control System Toolbox(TM) for
 % nonlinear state estimation.
@@ -383,21 +393,22 @@ DStateFcn = @(xk,uk,Ts) CubeSatStateFcnDiscreteTime_25122023(xk,uk,Ts);
 
 %%
 % Measurement can help the EKF correct its state estimation
-DMeasFcn = @(xk) xk(1:5);
+DMeasFcn = @(xk) xk(1:2);
 
 %%
-% Create the EKF, and indicate that the measurements have little noise.
+% Create the EKF, and indicate that the measurements have noise.
+noise_coe = 1; 
 EKF = extendedKalmanFilter(DStateFcn,DMeasFcn,x0);
-EKF.MeasurementNoise = 0.01;
+EKF.MeasurementNoise = noise_coe;
+
 
 %% Closed-Loop Simulation of Tracking Control
-% Simulate the system for Ts steps with correct initial conditions.
-Tsteps = Ts;
+% Simulate the system for 32 steps with correct initial conditions.
+Tsteps = p_op;
 xHistory_kmf = x0';
-uHistory_kmf = u0.';
+uHistory_kmf = [];
 
-lastMV = 125 * 10^(-4); 
-
+lastMV = A_target;  
 %%
 % The reference signals are the optimal state trajectories computed at the
 % planning stage. When passing these trajectories to the nonlinear MPC
@@ -406,11 +417,9 @@ lastMV = 125 * 10^(-4);
 % Xopt_kmf = x_plot_out;
 %[p_kmf,~] = size(Xopt_kmf);
 % Xref_kmf = [Xopt_kmf(1:p_kmf,:);repmat(Xopt_kmf(end,:),Tsteps-p_kmf,1)];
+Xref_kmf = x_plot_out; 
+% Xref_kmf = x_state_reference; 
 
-% Xref_kmf = x_plot_out; 
-Xref_kmf = x_state_reference; 
-
-1; 
 %%
 % Use |nlmpcmove| and |nlmpcmoveopt| command for closed-loop simulation.
 hbar = waitbar(0,'Simulation Progress');
@@ -419,7 +428,7 @@ options = nlmpcmoveopt;
 for k = 1:Tsteps
 
     % Obtain plant output measurements with sensor noise.
-    yk = xHistory_kmf(k,1:5)' + randn*0.01;
+    yk = xHistory_kmf(k,1:2)' + randn*noise_coe;
 
     % Correct state estimation based on the measurements.
     xk = correct(EKF, yk);
@@ -449,29 +458,45 @@ close(hbar)
 
 %%
 % Assuming h_plot is xHistory1(:,1)
+% Assuming you have the following vectors already defined
 h_plot_kmf = xHistory_kmf(:,1);
 X_plot_kmf = xHistory_kmf(:,2);
 V_plot_kmf = xHistory_kmf(:,3);
 theta_plot_kmf = xHistory_kmf(:,4);
 gamma_plot_kmf = xHistory_kmf(:,5);
-u_plot_kmf = uHistory_kmf; 
+u_plot_kmf = uHistory_kmf;
 
-% % % Create a logical index to exclude negative values
+% Create a logical index to exclude negative values
 positive_indices_kmf = h_plot_kmf >= 0;
-% % 
-% % % Filter the vectors using the logical index
-h_plot_kmf = h_plot_kmf(positive_indices_kmf);
-X_plot_kmf = X_plot_kmf(positive_indices_kmf);
-V_plot_kmf = V_plot_kmf(positive_indices_kmf);
-theta_plot_kmf = theta_plot_kmf(positive_indices_kmf);
-gamma_plot_kmf = gamma_plot_kmf(positive_indices_kmf);
-u_plot_kmf = u_plot_kmf(positive_indices_kmf);
 
-% plot(X_plot_kmf,h_plot_kmf,'g')
+% Filter the vectors using the logical index
+h_plot_kmf_non_negative = h_plot_kmf(positive_indices_kmf);
+X_plot_kmf_non_negative = X_plot_kmf(positive_indices_kmf);
+V_plot_kmf_non_negative = V_plot_kmf(positive_indices_kmf);
+theta_plot_kmf_non_negative = theta_plot_kmf(positive_indices_kmf);
+gamma_plot_kmf_non_negative = gamma_plot_kmf(positive_indices_kmf);
+% u_plot_kmf_non_negative = u_plot_kmf(positive_indices_kmf);
+
+% Find the greatest negative element for h_plot_kmf
+h_kmf_negative_indices = h_plot_kmf < 0;
+h_kmf_greatestNegativeElement = max(h_plot_kmf(h_kmf_negative_indices));
+index_greatestNegativeElement = find(h_plot_kmf == h_kmf_greatestNegativeElement);
+
+% Store the greatest negative element in all other vectors
+h_plot_kmf = [h_plot_kmf_non_negative; h_kmf_greatestNegativeElement];
+X_plot_kmf = [X_plot_kmf_non_negative; X_plot_kmf(index_greatestNegativeElement)];
+V_plot_kmf = [V_plot_kmf_non_negative; V_plot_kmf(index_greatestNegativeElement)];
+theta_plot_kmf = [theta_plot_kmf_non_negative; theta_plot_kmf(index_greatestNegativeElement)];
+gamma_plot_kmf = [gamma_plot_kmf_non_negative; gamma_plot_kmf(index_greatestNegativeElement)];
+% u_plot_kmf = [u_plot_kmf_non_negative; u_plot_kmf(h_kmf_negative_indices)];
+
+
+
 %%
-figure
+subplot(1,3,3)
 plot(X_plot, h_plot, 'r', x_reference_atm, h_reference_atm, 'b',X_plot_kmf,h_plot_kmf,'g')
 title('KMF')
+
 
 % Adding legend
 legend('Nonlinear MPC output (red)', 'Reference altitude vs. distance (blue)','kmf (green)')
