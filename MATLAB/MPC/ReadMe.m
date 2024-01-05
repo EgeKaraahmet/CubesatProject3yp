@@ -59,5 +59,6 @@ openExample('mpc/ControlRobotManipulatorUsingCGMRESSolverExample')
 % 4.   reference_signal_generator_MPC.slx
 %      This is a simulink code used for reference state generator 
 % 
-% 
+% 5. reference_signal_291123.m 
+%      Initial dynamics model with beautiful plots.
 % 

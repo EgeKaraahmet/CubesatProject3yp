@@ -337,7 +337,7 @@ legend('Nonlinear MPC output (red)', 'Reference altitude vs. distance (blue)')
 % example, you use a generic nonlinear MPC controller to move the robot to
 % the final location. In this path tracking problem, you track references
 % for all 5 states (the number of outputs equals the number of states).
-ny = 5;
+ny = 6;
 msobj_tracking = nlmpc(nx,ny,nmv);
 
 %%
