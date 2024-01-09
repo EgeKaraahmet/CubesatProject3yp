@@ -171,9 +171,10 @@ Q_heat = 100;                       % Heat Flux Weight Matrix
 
 
 % MPC controller setup
-p  = 10000;                    % Prediction Horizon.
-Ts = 10;                  % Sampling time 
+p  = 10;                    % Prediction Horizon.
+Ts = 0.01;                  % Sampling time 
 
+% xf = [0; x_end_125; V_end_125; theta_end_125; gamma_end_125];       % Desired terminal State.
 xf = [h_end; x_end; V_end; theta_end; gamma_end];       % Desired terminal State.
 
 
@@ -231,7 +232,7 @@ simdata.StageParameter = repmat(pvcost, p+1, 1);
 msobj.Optimization.Solver = "cgmres";
 % Adjust the Stabilization Parameter 
 % based on the prediction model sample time.
-msobj.Optimization.SolverOptions.StabilizationParameter = 1/msobj.Ts; % 1/mosbj.Ts
+msobj.Optimization.SolverOptions.StabilizationParameter = 2/msobj.Ts; % 1/mosbj.Ts
 
 % Set the solver parameters.
 msobj.Optimization.SolverOptions.MaxIterations = 10;

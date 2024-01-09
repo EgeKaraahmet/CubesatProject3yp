@@ -1,4 +1,4 @@
-function L = CubeSatCostFcn_03012024(stage, x, u, pvcost)
+function [Gx, Gmv] = CubeSatCostJacobianFcn_03012024(stage, x, u, pvcost)
 % twolinkCostFcn
 %   L = twolinkCostFcn(stage, x, u, pvcost)
 %   
@@ -29,30 +29,24 @@ p  = pvcost(end);                         % Prediction Horizon
 
 h = x(1);
 V = x(3);
-%q_ref = 200 * 10^3; 
+q_ref = 200 * 10^3; 
 rcurv = 0.1; 
 
 % heat flux
 SH = 8397.5; 
 rho = 1.225 * exp(- h/(SH));    % my Python model, using SH = 8.43 and rho0=1.221 as constant
-% q_max=1.83e-4*V.^3.*sqrt(rho/rcurv);
+q_max=1.83e-4*V.^3.*sqrt(rho/rcurv);
+
 
 
 
 if stage == p + 1
-    % Define the distance constraint parameters
-    % gamma_mpc = 1; % Adjust this value based on your requirements
-    % V = diag([100, 100, 100, 100, 100]); 
-
-    % Calculate cost for the terminal stage with additional distance constraint
-    % distance_term = 0.5 * (x - xf).' * V * (x - xf);
-    % terminal_cost = 0.5 * (x - xf).' * Sf * (x - xf);
-    % L = terminal_cost + gamma_mpc * distance_term;
-    L = 0.5 * (x - xf).' * Sf * (x - xf);
+    % Calculate Jacobian matrices for the terminal stage
+    Gx  = Sf*(x - xf);
+    Gmv = zeros(length(u), 1);
 else
-    % Calculate cost for intermediate stages
-    % L = 0.5*(x - xf).'*Q*(x - xf) + 0.5*u.'*R*u + (q_max - q_ref) * Q_heat *(q_max-q_ref);
-    % L = 0.5*(x - xf).'*Q*(x - xf) + (q_max - q_ref) * Q_heat *(q_max-q_ref);
-    L = 0.5*(x - xf).'*Q*(x - xf) + 0.5*u.'*R*u; 
+    % Calculate Jacobian matrices for intermediate stages
+    Gx  = Q*(x - xf); 
+    Gmv = R*u;
 end
 end
