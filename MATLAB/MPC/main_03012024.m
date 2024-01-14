@@ -136,6 +136,7 @@ theta_reference_signal=[kepOut.theta;atmOut.theta];
 rho_reference_signal=[kepOut.rho;atmOut.rho];
 dotV_reference_signal=[kepOut.dotV;atmOut.dotV];
 
+testing = atmOut.time; 
 x_state_reference = [atmOut.h, atmOut.x, atmOut.V, atmOut.theta, atmOut.gamma];
 
 
@@ -171,8 +172,9 @@ Q_heat = 100;                       % Heat Flux Weight Matrix
 
 
 % MPC controller setup
-p  = 10000;                    % Prediction Horizon.
-Ts = 10;                  % Sampling time 
+%%%% duration = 3851
+p  = 4000/(100);                    % Prediction Horizon.
+Ts = 100;                  % Sampling time 
 
 xf = [h_end; x_end; V_end; theta_end; gamma_end];       % Desired terminal State.
 
@@ -234,7 +236,7 @@ msobj.Optimization.Solver = "cgmres";
 msobj.Optimization.SolverOptions.StabilizationParameter = 1/msobj.Ts; % 1/mosbj.Ts
 
 % Set the solver parameters.
-msobj.Optimization.SolverOptions.MaxIterations = 10;
+msobj.Optimization.SolverOptions.MaxIterations = 100;
 msobj.Optimization.SolverOptions.Restart = 3;
 msobj.Optimization.SolverOptions.BarrierParameter = 1e-5;
 msobj.Optimization.SolverOptions.TerminationTolerance = 1e-6;
@@ -394,128 +396,128 @@ msobj_tracking.MV.Max = 150 * 10^(-4);
 %%
 validateFcns(msobj_tracking,x0,u0);
 
-% %% Nonlinear State Estimation
-% % In this example, only the position states (h,X) are
-% % measured. The velocity states are unmeasured and must be estimated. Use
-% % an extended Kalman filter (EKF) from Control System Toolbox(TM) for
-% % nonlinear state estimation.
-% %
-% % Because an EKF requires a discrete-time model, you use the trapezoidal
-% % rule to transition from x(k) to x(k+1), which requires the solution of
-% % |nx| nonlinear algebraic equations. For more information, open
-% % |FlyingRobotStateFcnDiscreteTime.m|.
-% DStateFcn = @(xk,uk,Ts) CubeSatStateFcnDiscreteTime_25122023(xk,uk,Ts);
-% 
-% %%
-% % Measurement can help the EKF correct its state estimation
-% DMeasFcn = @(xk) xk(1:2);
-% 
-% %%
-% % Create the EKF, and indicate that the measurements have noise.
-% noise_coe = 1; 
-% EKF = extendedKalmanFilter(DStateFcn,DMeasFcn,x0);
-% EKF.MeasurementNoise = noise_coe;
-% 
-% 
-% %% Closed-Loop Simulation of Tracking Control
-% % Simulate the system for 32 steps with correct initial conditions.
-% Tsteps = p_op;
-% xHistory_kmf = x0';
-% uHistory_kmf = [];
-% 
-% lastMV = A_target;
-% %%
-% % The reference signals are the optimal state trajectories computed at the
-% % planning stage. When passing these trajectories to the nonlinear MPC
-% % controller, the current and future trajectory is available for
-% % previewing.
-% % Xopt_kmf = x_plot_out;
-% %[p_kmf,~] = size(Xopt_kmf);
-% % Xref_kmf = [Xopt_kmf(1:p_kmf,:);repmat(Xopt_kmf(end,:),Tsteps-p_kmf,1)];
-% Xref_kmf = x_plot_out; 
-% % Xref_kmf = x_state_reference; 
-% 
-% %%
-% % Use |nlmpcmove| and |nlmpcmoveopt| command for closed-loop simulation.
-% hbar = waitbar(0,'Simulation Progress');
-% options = nlmpcmoveopt;
-% 
-% for k = 1:Tsteps
-% 
-%     % Obtain plant output measurements with sensor noise.
-%     yk = xHistory_kmf(k,1:2)' + randn*noise_coe;
-% 
-%     % Correct state estimation based on the measurements.
-%     xk = correct(EKF, yk);
-% 
-%     % Compute the control moves with reference previewing.
-%     [uk,options] = nlmpcmove(msobj_tracking,xk,lastMV,Xref_kmf(k:min(k+9,Tsteps),:),[],options);
-% 
-%     % Predict the state for the next step.
-%     predict(EKF,uk,Ts);
-% 
-%     % Store the control move and update the last MV for the next step.
-%     uHistory_kmf(k,:) = uk'; %#ok<*SAGROW>
-%     lastMV = uk;
-% 
-%     % Update the real plant states for the next step by solving the
-%     % continuous-time ODEs based on current states xk and input uk.
-%     ODEFUN = @(t,xk) CubeSatStateFcn_25122023(xk,uk);
-%     [TOUT,YOUT] = ode45(ODEFUN,[0 Ts], xHistory_kmf(k,:)');
-% 
-%     % Store the state values.
-%     xHistory_kmf(k+1,:) = YOUT(end,:);
-% 
-%     % Update the status bar.
-%     waitbar(k/Tsteps, hbar);
-% end
-% close(hbar)
-% 
-% %%
-% % Assuming h_plot is xHistory1(:,1)
-% % Assuming you have the following vectors already defined
-% h_plot_kmf = xHistory_kmf(:,1);
-% X_plot_kmf = xHistory_kmf(:,2);
-% V_plot_kmf = xHistory_kmf(:,3);
-% theta_plot_kmf = xHistory_kmf(:,4);
-% gamma_plot_kmf = xHistory_kmf(:,5);
-% u_plot_kmf = uHistory_kmf;
-% 
-% % Create a logical index to exclude negative values
-% positive_indices_kmf = h_plot_kmf >= 0;
-% 
-% % Filter the vectors using the logical index
-% h_plot_kmf_non_negative = h_plot_kmf(positive_indices_kmf);
-% X_plot_kmf_non_negative = X_plot_kmf(positive_indices_kmf);
-% V_plot_kmf_non_negative = V_plot_kmf(positive_indices_kmf);
-% theta_plot_kmf_non_negative = theta_plot_kmf(positive_indices_kmf);
-% gamma_plot_kmf_non_negative = gamma_plot_kmf(positive_indices_kmf);
-% % u_plot_kmf_non_negative = u_plot_kmf(positive_indices_kmf);
-% 
-% % Find the greatest negative element for h_plot_kmf
-% h_kmf_negative_indices = h_plot_kmf < 0;
-% h_kmf_greatestNegativeElement = max(h_plot_kmf(h_kmf_negative_indices));
-% index_greatestNegativeElement = find(h_plot_kmf == h_kmf_greatestNegativeElement);
-% 
-% % Store the greatest negative element in all other vectors
-% h_plot_kmf = [h_plot_kmf_non_negative; h_kmf_greatestNegativeElement];
-% X_plot_kmf = [X_plot_kmf_non_negative; X_plot_kmf(index_greatestNegativeElement)];
-% V_plot_kmf = [V_plot_kmf_non_negative; V_plot_kmf(index_greatestNegativeElement)];
-% theta_plot_kmf = [theta_plot_kmf_non_negative; theta_plot_kmf(index_greatestNegativeElement)];
-% gamma_plot_kmf = [gamma_plot_kmf_non_negative; gamma_plot_kmf(index_greatestNegativeElement)];
-% % u_plot_kmf = [u_plot_kmf_non_negative; u_plot_kmf(h_kmf_negative_indices)];
-% 
-% 
-% 
-% %%
-% subplot(2,2,3)
-% plot(X_plot, h_plot, 'r',X_plot_kmf,h_plot_kmf,'*g')
-% title('OP, KMF')
-% 
-% subplot(2,2,4)
-% plot(X_plot, h_plot, 'r', x_reference_atm, h_reference_atm, 'b',X_plot_kmf,h_plot_kmf,'*g')
-% title('RS, OP, KMF')
-% 
-% % Adding legend
-% legend('Nonlinear MPC output (red)', 'Reference altitude vs. distance (blue)','kmf (green)')
-% 
+%% Nonlinear State Estimation
+% In this example, only the position states (h,X) are
+% measured. The velocity states are unmeasured and must be estimated. Use
+% an extended Kalman filter (EKF) from Control System Toolbox(TM) for
+% nonlinear state estimation.
+%
+% Because an EKF requires a discrete-time model, you use the trapezoidal
+% rule to transition from x(k) to x(k+1), which requires the solution of
+% |nx| nonlinear algebraic equations. For more information, open
+% |FlyingRobotStateFcnDiscreteTime.m|.
+DStateFcn = @(xk,uk,Ts) CubeSatStateFcnDiscreteTime_25122023(xk,uk,Ts);
+
+%%
+% Measurement can help the EKF correct its state estimation
+DMeasFcn = @(xk) xk(1:2);
+
+%%
+% Create the EKF, and indicate that the measurements have noise.
+noise_coe = 1; 
+EKF = extendedKalmanFilter(DStateFcn,DMeasFcn,x0);
+EKF.MeasurementNoise = noise_coe;
+
+
+%% Closed-Loop Simulation of Tracking Control
+% Simulate the system for 32 steps with correct initial conditions.
+Tsteps = p_op;
+xHistory_kmf = x0';
+uHistory_kmf = [];
+
+lastMV = A_target;
+%%
+% The reference signals are the optimal state trajectories computed at the
+% planning stage. When passing these trajectories to the nonlinear MPC
+% controller, the current and future trajectory is available for
+% previewing.
+% Xopt_kmf = x_plot_out;
+%[p_kmf,~] = size(Xopt_kmf);
+% Xref_kmf = [Xopt_kmf(1:p_kmf,:);repmat(Xopt_kmf(end,:),Tsteps-p_kmf,1)];
+Xref_kmf = x_plot_out; 
+% Xref_kmf = x_state_reference; 
+
+%%
+% Use |nlmpcmove| and |nlmpcmoveopt| command for closed-loop simulation.
+hbar = waitbar(0,'Simulation Progress');
+options = nlmpcmoveopt;
+
+for k = 1:Tsteps
+
+    % Obtain plant output measurements with sensor noise.
+    yk = xHistory_kmf(k,1:2)' + randn*noise_coe;
+
+    % Correct state estimation based on the measurements.
+    xk = correct(EKF, yk);
+
+    % Compute the control moves with reference previewing.
+    [uk,options] = nlmpcmove(msobj_tracking,xk,lastMV,Xref_kmf(k:min(k+9,Tsteps),:),[],options);
+
+    % Predict the state for the next step.
+    predict(EKF,uk,Ts);
+
+    % Store the control move and update the last MV for the next step.
+    uHistory_kmf(k,:) = uk'; %#ok<*SAGROW>
+    lastMV = uk;
+
+    % Update the real plant states for the next step by solving the
+    % continuous-time ODEs based on current states xk and input uk.
+    ODEFUN = @(t,xk) CubeSatStateFcn_25122023(xk,uk);
+    [TOUT,YOUT] = ode45(ODEFUN,[0 Ts], xHistory_kmf(k,:)');
+
+    % Store the state values.
+    xHistory_kmf(k+1,:) = YOUT(end,:);
+
+    % Update the status bar.
+    waitbar(k/Tsteps, hbar);
+end
+close(hbar)
+
+%%
+% Assuming h_plot is xHistory1(:,1)
+% Assuming you have the following vectors already defined
+h_plot_kmf = xHistory_kmf(:,1);
+X_plot_kmf = xHistory_kmf(:,2);
+V_plot_kmf = xHistory_kmf(:,3);
+theta_plot_kmf = xHistory_kmf(:,4);
+gamma_plot_kmf = xHistory_kmf(:,5);
+u_plot_kmf = uHistory_kmf;
+
+% Create a logical index to exclude negative values
+positive_indices_kmf = h_plot_kmf >= 0;
+
+% Filter the vectors using the logical index
+h_plot_kmf_non_negative = h_plot_kmf(positive_indices_kmf);
+X_plot_kmf_non_negative = X_plot_kmf(positive_indices_kmf);
+V_plot_kmf_non_negative = V_plot_kmf(positive_indices_kmf);
+theta_plot_kmf_non_negative = theta_plot_kmf(positive_indices_kmf);
+gamma_plot_kmf_non_negative = gamma_plot_kmf(positive_indices_kmf);
+% u_plot_kmf_non_negative = u_plot_kmf(positive_indices_kmf);
+
+% Find the greatest negative element for h_plot_kmf
+h_kmf_negative_indices = h_plot_kmf < 0;
+h_kmf_greatestNegativeElement = max(h_plot_kmf(h_kmf_negative_indices));
+index_greatestNegativeElement = find(h_plot_kmf == h_kmf_greatestNegativeElement);
+
+% Store the greatest negative element in all other vectors
+h_plot_kmf = [h_plot_kmf_non_negative; h_kmf_greatestNegativeElement];
+X_plot_kmf = [X_plot_kmf_non_negative; X_plot_kmf(index_greatestNegativeElement)];
+V_plot_kmf = [V_plot_kmf_non_negative; V_plot_kmf(index_greatestNegativeElement)];
+theta_plot_kmf = [theta_plot_kmf_non_negative; theta_plot_kmf(index_greatestNegativeElement)];
+gamma_plot_kmf = [gamma_plot_kmf_non_negative; gamma_plot_kmf(index_greatestNegativeElement)];
+% u_plot_kmf = [u_plot_kmf_non_negative; u_plot_kmf(h_kmf_negative_indices)];
+
+
+
+%%
+subplot(2,2,3)
+plot(X_plot, h_plot, 'r',X_plot_kmf,h_plot_kmf,'*g')
+title('OP, KMF')
+
+subplot(2,2,4)
+plot(X_plot, h_plot, 'r', x_reference_atm, h_reference_atm, 'b',X_plot_kmf,h_plot_kmf,'*g')
+title('RS, OP, KMF')
+
+% Adding legend
+legend('Nonlinear MPC output (red)', 'Reference altitude vs. distance (blue)','kmf (green)')
+

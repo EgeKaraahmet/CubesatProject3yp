@@ -16,7 +16,7 @@ close all
 
 %% Initial conditions 
 % Input 
-A=110*10^(-4);          %m^2        % spacecraft cross - sectional area
+A=125*10^(-4);          %m^2        % spacecraft cross - sectional area
 
 % constant 
 m = 6;                  %kg         % spacecraft mass  m = 3 for ISS
@@ -136,6 +136,7 @@ theta_reference_signal=[kepOut.theta;atmOut.theta];
 rho_reference_signal=[kepOut.rho;atmOut.rho];
 dotV_reference_signal=[kepOut.dotV;atmOut.dotV];
 
+testing = atmOut.time; 
 x_state_reference = [atmOut.h, atmOut.x, atmOut.V, atmOut.theta, atmOut.gamma];
 
 
@@ -171,10 +172,10 @@ Q_heat = 100;                       % Heat Flux Weight Matrix
 
 
 % MPC controller setup
-p  = 10;                    % Prediction Horizon.
-Ts = 0.01;                  % Sampling time 
+%%%% duration = 3851
+p  = 20;                    % Prediction Horizon.
+Ts = 100;                  % Sampling time 
 
-% xf = [0; x_end_125; V_end_125; theta_end_125; gamma_end_125];       % Desired terminal State.
 xf = [h_end; x_end; V_end; theta_end; gamma_end];       % Desired terminal State.
 
 
@@ -227,18 +228,38 @@ simdata = getSimulationData(msobj);
 % simdata.StateFcnParameter = pvstate;
 simdata.StageParameter = repmat(pvcost, p+1, 1);
 
-%% Setting the Optimization Solver: C/GMRES
-%%% continuation/generalized minimum residual (C/GMRES) solver
-msobj.Optimization.Solver = "cgmres";
-% Adjust the Stabilization Parameter 
-% based on the prediction model sample time.
-msobj.Optimization.SolverOptions.StabilizationParameter = 2/msobj.Ts; % 1/mosbj.Ts
 
-% Set the solver parameters.
-msobj.Optimization.SolverOptions.MaxIterations = 10;
-msobj.Optimization.SolverOptions.Restart = 3;
-msobj.Optimization.SolverOptions.BarrierParameter = 1e-5;
-msobj.Optimization.SolverOptions.TerminationTolerance = 1e-6;
+%% Optimisation solver 
+% Define the objective function for fmincon
+objective = @(u) computeCost(u, x_op_0, x_reference, Q, R);
+
+% Define initial guess for u
+u_guess = 110 * 10^(-4);
+
+% Define constraints
+A = [];
+b = [];
+Aeq = [];
+beq = [];
+
+% Hard bounds on u
+lb = 100 * 10^(-4);
+ub = 150 * 10^(-4);
+
+% Nonlinear constraint function
+nonlcon = @(u) nonlinearConstraints(u, x_op_0, d);
+
+% Set up fmincon options
+options = optimoptions('fmincon', 'Display', 'iter', 'Algorithm', 'interior-point');
+
+% Call fmincon
+u_optimal = fmincon(objective, u_guess, A, b, Aeq, beq, lb, ub, nonlcon, options);
+
+
+
+
+
+
 
 
 
@@ -247,7 +268,7 @@ msobj.Optimization.SolverOptions.TerminationTolerance = 1e-6;
 Duration = Ts * p;
 
 x0 = x_op_0; 
-u0 = A; 
+u0 = 124 * 10*(-4); 
 
 
 % Store states and control for plotting purposes.
@@ -262,6 +283,7 @@ uk = uHistory1(1,:);
 timerVal1 = 0;
 
 
+%%
 % Simulation loop
 for k = 1:(Duration/Ts)
     % Compute optimal control action using nlmpcmove.
@@ -319,7 +341,7 @@ x_reference_atm = [atmOut.x];
 %%
 % Plotting using zero-order hold
 figure
-subplot(2,2,1)
+subplot(1,2,1)
 n = 1:length(u_plot);
 stairs(n, u_plot, 'b-', 'LineWidth', 2);
 
@@ -327,13 +349,8 @@ stairs(n, u_plot, 'b-', 'LineWidth', 2);
 ylabel('u');
 title('Zero-Order Hold Plot');
 
-%%%
-% I doubt that the controller is not working properly. This is because my
-% u-plot is almost a step increase to 125 cm^2, even when I change my
-% sampling time. 
 
-
-subplot(2,2,2)
+subplot(1,2,2)
 plot(X_plot, h_plot, 'r', x_reference_atm, h_reference_atm, 'b')
 title('Nonlinear MPC output')
 
@@ -341,182 +358,20 @@ title('Nonlinear MPC output')
 legend('Nonlinear MPC output (red)', 'Reference altitude vs. distance (blue)')
 
 
-A_target = u_plot(end);   %m^2        % spacecraft cross - sectional area
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Feedback Control and Kalman Filter 
+function J = computeCost(u, x, x_ref, Q, R)
+    N = length(u);
+    J = 0;
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Feedback Control for Path Following
-% After the optimal trajectory is found, a feedback controller is required
-% to move the robot along the path. In theory, you can apply the optimal MV
-% profile directly to the thrusters to implement feed-forward control.
-% However, in practice, a feedback controller is needed to reject
-% disturbances and compensate for modeling errors.
-%
-% You can use different feedback control techniques for tracking. In this
-% example, you use a generic nonlinear MPC controller to move the robot to
-% the final location. In this path tracking problem, you track references
-% for all 5 states (the number of outputs equals the number of states).
-ny = 5;
-msobj_tracking = nlmpc(nx,ny,nmv);
+    for k = 1:N
+        J = J + norm(x - x_ref)^2 + norm(u(k))^2;
+        x = yourDynamicsFunction(x, u(k)); % Replace with your actual dynamics function
+    end
+end
 
-%%
-% Use the same state function and its Jacobian function.
-msobj_tracking.Model.StateFcn = msobj.Model.StateFcn;
+function [c, ceq] = nonlinearConstraints(u, x, d)
+    % Nonlinear constraints: ||x - x_ref||^2 <= d^2
+    ceq = norm(x - x_ref)^2 - d^2;
+    c = [];
+end
 
-%%
-% For tracking control applications, reduce the computational effort by
-% specifying shorter prediction horizon (no need to look far into the
-% future) and control horizon (for example, free moves are allocated at the
-% first few prediction steps).
-msobj_tracking.Ts = Ts;
-msobj_tracking.PredictionHorizon = 10;
-msobj_tracking.ControlHorizon = 4;
-
-%%
-% The default cost function in nonlinear MPC is a standard quadratic cost
-% function suitable for reference tracking and disturbance rejection. For
-% tracking, tracking error has higher priority (larger penalty weights on
-% outputs) than control efforts (smaller penalty weights on MV rates).
-msobj_tracking.Weights.ManipulatedVariablesRate = 10; 
-msobj_tracking.Weights.OutputVariables = 100*ones(1,ny);
-
-%%
-% Set the same bounds for the area inputs.
-msobj_tracking.MV.Min = 100 * 10^(-4);
-msobj_tracking.MV.Max = 150 * 10^(-4);
-
-
-%%
-validateFcns(msobj_tracking,x0,u0);
-
-% %% Nonlinear State Estimation
-% % In this example, only the position states (h,X) are
-% % measured. The velocity states are unmeasured and must be estimated. Use
-% % an extended Kalman filter (EKF) from Control System Toolbox(TM) for
-% % nonlinear state estimation.
-% %
-% % Because an EKF requires a discrete-time model, you use the trapezoidal
-% % rule to transition from x(k) to x(k+1), which requires the solution of
-% % |nx| nonlinear algebraic equations. For more information, open
-% % |FlyingRobotStateFcnDiscreteTime.m|.
-% DStateFcn = @(xk,uk,Ts) CubeSatStateFcnDiscreteTime_25122023(xk,uk,Ts);
-% 
-% %%
-% % Measurement can help the EKF correct its state estimation
-% DMeasFcn = @(xk) xk(1:2);
-% 
-% %%
-% % Create the EKF, and indicate that the measurements have noise.
-% noise_coe = 1; 
-% EKF = extendedKalmanFilter(DStateFcn,DMeasFcn,x0);
-% EKF.MeasurementNoise = noise_coe;
-% 
-% 
-% %% Closed-Loop Simulation of Tracking Control
-% % Simulate the system for 32 steps with correct initial conditions.
-% Tsteps = p_op;
-% xHistory_kmf = x0';
-% uHistory_kmf = [];
-% 
-% lastMV = A_target;
-% %%
-% % The reference signals are the optimal state trajectories computed at the
-% % planning stage. When passing these trajectories to the nonlinear MPC
-% % controller, the current and future trajectory is available for
-% % previewing.
-% % Xopt_kmf = x_plot_out;
-% %[p_kmf,~] = size(Xopt_kmf);
-% % Xref_kmf = [Xopt_kmf(1:p_kmf,:);repmat(Xopt_kmf(end,:),Tsteps-p_kmf,1)];
-% Xref_kmf = x_plot_out; 
-% % Xref_kmf = x_state_reference; 
-% 
-% %%
-% % Use |nlmpcmove| and |nlmpcmoveopt| command for closed-loop simulation.
-% hbar = waitbar(0,'Simulation Progress');
-% options = nlmpcmoveopt;
-% 
-% for k = 1:Tsteps
-% 
-%     % Obtain plant output measurements with sensor noise.
-%     yk = xHistory_kmf(k,1:2)' + randn*noise_coe;
-% 
-%     % Correct state estimation based on the measurements.
-%     xk = correct(EKF, yk);
-% 
-%     % Compute the control moves with reference previewing.
-%     [uk,options] = nlmpcmove(msobj_tracking,xk,lastMV,Xref_kmf(k:min(k+9,Tsteps),:),[],options);
-% 
-%     % Predict the state for the next step.
-%     predict(EKF,uk,Ts);
-% 
-%     % Store the control move and update the last MV for the next step.
-%     uHistory_kmf(k,:) = uk'; %#ok<*SAGROW>
-%     lastMV = uk;
-% 
-%     % Update the real plant states for the next step by solving the
-%     % continuous-time ODEs based on current states xk and input uk.
-%     ODEFUN = @(t,xk) CubeSatStateFcn_25122023(xk,uk);
-%     [TOUT,YOUT] = ode45(ODEFUN,[0 Ts], xHistory_kmf(k,:)');
-% 
-%     % Store the state values.
-%     xHistory_kmf(k+1,:) = YOUT(end,:);
-% 
-%     % Update the status bar.
-%     waitbar(k/Tsteps, hbar);
-% end
-% close(hbar)
-% 
-% %%
-% % Assuming h_plot is xHistory1(:,1)
-% % Assuming you have the following vectors already defined
-% h_plot_kmf = xHistory_kmf(:,1);
-% X_plot_kmf = xHistory_kmf(:,2);
-% V_plot_kmf = xHistory_kmf(:,3);
-% theta_plot_kmf = xHistory_kmf(:,4);
-% gamma_plot_kmf = xHistory_kmf(:,5);
-% u_plot_kmf = uHistory_kmf;
-% 
-% % Create a logical index to exclude negative values
-% positive_indices_kmf = h_plot_kmf >= 0;
-% 
-% % Filter the vectors using the logical index
-% h_plot_kmf_non_negative = h_plot_kmf(positive_indices_kmf);
-% X_plot_kmf_non_negative = X_plot_kmf(positive_indices_kmf);
-% V_plot_kmf_non_negative = V_plot_kmf(positive_indices_kmf);
-% theta_plot_kmf_non_negative = theta_plot_kmf(positive_indices_kmf);
-% gamma_plot_kmf_non_negative = gamma_plot_kmf(positive_indices_kmf);
-% % u_plot_kmf_non_negative = u_plot_kmf(positive_indices_kmf);
-% 
-% % Find the greatest negative element for h_plot_kmf
-% h_kmf_negative_indices = h_plot_kmf < 0;
-% h_kmf_greatestNegativeElement = max(h_plot_kmf(h_kmf_negative_indices));
-% index_greatestNegativeElement = find(h_plot_kmf == h_kmf_greatestNegativeElement);
-% 
-% % Store the greatest negative element in all other vectors
-% h_plot_kmf = [h_plot_kmf_non_negative; h_kmf_greatestNegativeElement];
-% X_plot_kmf = [X_plot_kmf_non_negative; X_plot_kmf(index_greatestNegativeElement)];
-% V_plot_kmf = [V_plot_kmf_non_negative; V_plot_kmf(index_greatestNegativeElement)];
-% theta_plot_kmf = [theta_plot_kmf_non_negative; theta_plot_kmf(index_greatestNegativeElement)];
-% gamma_plot_kmf = [gamma_plot_kmf_non_negative; gamma_plot_kmf(index_greatestNegativeElement)];
-% % u_plot_kmf = [u_plot_kmf_non_negative; u_plot_kmf(h_kmf_negative_indices)];
-% 
-% 
-% 
-% %%
-% subplot(2,2,3)
-% plot(X_plot, h_plot, 'r',X_plot_kmf,h_plot_kmf,'*g')
-% title('OP, KMF')
-% 
-% subplot(2,2,4)
-% plot(X_plot, h_plot, 'r', x_reference_atm, h_reference_atm, 'b',X_plot_kmf,h_plot_kmf,'*g')
-% title('RS, OP, KMF')
-% 
-% % Adding legend
-% legend('Nonlinear MPC output (red)', 'Reference altitude vs. distance (blue)','kmf (green)')
-% 
