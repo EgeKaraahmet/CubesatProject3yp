@@ -1,0 +1,74 @@
+function Gamma = getgamma(T,P)
+%%% THIS FUNCTION CALCULATES ADIABATIC INDEX OF AIR between temperatures
+%%% (200 - 1000K) and pressures (<1 - 1000 Bar).
+
+%%% REFERENCE: Alireza Bahadori, Hari B. Vuthaluru,
+%Estimation of air specific heat ratio at elevated pressures using simple predictive tool,
+%Energy Conversion and Management,
+%Volume 52, Issue 2,
+%2011,
+%Pages 1526-1532,
+%ISSN 0196-8904,
+%https://doi.org/10.1016/j.enconman.2010.10.022.
+%(https://www.sciencedirect.com/science/article/pii/S0196890410004668)
+%Abstract: Over the years, considerable research effort has been expended towards evaluation of the thermophysical and transport properties of air for a wide range of temperatures. However, a relatively limited attention was oriented towards investigation of air specific heat ratios at elevated pressures. In this work, a simple predictive tool, which is easier than current available models, less complicated with fewer computations and suitable for process engineers, is presented here for the prediction of specific heat ratio of air at elevated pressures as a function of temperature and pressure using a novel and theoretically based meaningful Arrhenius-type asymptotic exponential function combined with Vandermonde matrix. The proposed method is superior owing to its accuracy and clear numerical background based on Vandermonde matrix, wherein the relevant coefficients can be retuned quickly if more data are available. The proposed correlation predicts the specific heat ratios of air for temperatures up to 1000K, and pressures up to 1000bar (100,000kPa). Estimations are found to be in excellent agreement with the reliable data in the literature with average absolute deviations being less than 0.2%. The tool developed in this study can be of immense practical value for the engineers and scientists to have a quick check on the compressed air specific heat ratios at various conditions without opting for any experimental measurements. In particular, chemical and process engineers would find the approach to be user-friendly with transparent calculations involving no complex expressions.
+%Keywords: Formulation; Specific heat ratio; Compressed air; Vandermonde matrix; Arrhenius function
+
+
+if P > 1000
+    error("Pressure cannot be more than 1000 bar!");
+end
+
+if P <= 100
+    A1 =  2.13879130290102 * 10^-1;
+    B1 = 2.82131393663459  * 10^-4;
+    C1 = -1.2488865910034   * 10^-5;
+    D1 = 6.27433500214741  * 10^-8;
+    A2 = 1.01842474952184  * 10^2;
+    B2 = -5.31113787399755  * 10^-1;
+    C2 = 2.22974989456912  * 10^-2;
+    D2 = -1.16407115910221  * 10^-4;
+    A3 = -2.78259248326215  * 10^4;
+    B3 = 3.26043144671541  * 10^2;
+    C3 = -1.14301123788797  * 10^1;
+    D3 = 6.0156612910728   * 10^-2;
+    A4 = 2.49672856170305  * 10^6;
+    B4 = -2.225291657090468 * 10^4;
+    C4 = 1.69726770928572  * 10^3;
+    D4 = -9.112929608307468;
+
+    a = A1 + B1*P + C1*P^2 + D1*P^3;
+    b = A2 + B2*P + C2*P^2 + D2*P^3;
+    c = A3 + B3*P + C3*P^2 + D3*P^3;
+    d = A4 + B4*P + C4*P^2 + D4*P^3;
+
+    Gamma = exp(a + (b/T) + (c/(T^2)) + (d/(T^3))); 
+
+elseif P > 100
+    A1 7.9015679093829  102
+    B1 1.2130630606963  102
+    C1 2.36518584003546  104
+    D1 1.25191944329465  106
+    A2 3.31006934766052  102
+    B2 2.13360008453752  105
+    C2 4.21913706427567  107
+    D2 2.26028517541403  109
+    A3 9.72790877944002  104
+    B3 9.60494733962022  107
+    C3 2.04344514365252  1010
+    D3 1.13084180192825  1012
+    A4 8.22547956598205  106
+    B4 1.02758574875423  1010
+    C4 2.4471151509164  1012
+    D4 1.42077286651882  1014
+
+
+end
+
+
+
+
+
+
+
+

@@ -1,0 +1,386 @@
+<!DOCTYPE html>  
+<!-- www.pdas.com/atmoscalc.html, called from atmosapps.html -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>U.S. 1976 Standard Atmosphere Calculator</title>
+<meta name="description" content="Compute the properties of the standard
+  atmosphere at a specified altitude. A velocity (given as Mach number)
+  may also be specified. The thermodynamic and transport properties of air
+  at the specified altitude are computed as well as the dynamic properties
+  associated with the given Mach number. The user may choose between SI
+  and US Customary units." />
+<meta name="author" content="Ralph L. Carmichael, 
+   Public Domain Aeronautical Software" />
+
+<!-- HISTORY
+   DATE      WHO  COMMENT
+18 Jan 2014  RLC  Original coding from old atmcalc.html
+21 Jan 2014  RLC  No more unit fields for results; adjusted sizes
+23 Jan 2014  RLC  Fixed errors in ChangeUnits
+25 Jam 2014  RLC  Adjusted precision fields
+13 Feb 2014  RLC  First release thru PDAS web site
+-->
+
+<style>
+  body { margin: 1em; color:black; background: white;
+         font-size: 120%; font-family: Helvetica,Arial,Sans-serif; }
+  header {width: 100%; border-bottom: 3px solid blue; padding: 3px; }
+  footer {width: 100%; font-size: 80%; padding: 3px; border-top: 3px solid red; }
+  h1 { font-family: Helvetica,Arial,sans-serif; text-align: center;
+       font-weight: bold; font-size: 2.0em; color: blue; margin-top: 0.5em; }
+
+  #ComputeButton {margin: 20px; background-color: red; font: 24px arial;}
+  
+  div.banner {width: 100%; background: blue; color: white;
+              font-size: 100%; text-align: right;
+              font-family: Verdana,Arial,Helvetica, sans-serif; }
+
+ input[type='text'] {color:green; font-size: 100%; }
+</style>
+
+<script>
+
+
+function ChangeUnits() {
+  const FT2METERS = 0.3048;                   // mult. ft. to get meters (exact)
+  var si = document.getElementById("unitsSi").checked;
+  
+  var oldAltField = document.getElementById("altfield").value;  
+//  alert("oldAltField "+oldAltField);
+  var alt = Number(oldAltField);
+//  alert("alt "+ alt.toPrecision(4));
+  if (si)
+    alt = alt*FT2METERS;
+  else  
+    alt = alt/FT2METERS;
+    
+//  alert("alt "+ alt.toPrecision(4));    
+
+  var newAltField = alt.toFixed();  
+//  alert("newAltField "+newAltField);
+    
+  document.getElementById("altfield").value = newAltField;
+  if (si)
+    document.getElementById("altunits").value = "meters";
+  else
+    document.getElementById("altunits").value = "feet";
+
+  ComputeAtmosphere();
+    
+}   // --------------------------------------------- End of function ChangeUnits
+
+function HideResults() {
+//  alert("Hiding results");
+  document.getElementById("results").style.visibility="hidden";
+}   // --------------------------------------------- End of function HideResults
+
+function GetAtmosBand(htab,h) {
+  const TABLESIZE = 8;
+//  const htab = [0.0, 11.0, 20.0, 32.0, 47.0, 51.0, 71.0, 84.852];
+  var i,j,k;
+
+  i=0;
+  j=TABLESIZE-1;
+  while (true) {                               // binary search in ordered table 
+    k = Math.floor((i+j) / 2);             // integer division. OK since i+j > 0
+    if (h < htab[k])  j=k; else i=k;
+    if (j <= i+1) break;
+  }  
+//  alert("i " + i.toFixed() );
+  return i;
+}   // -------------------------------------------- End of function GetAtmosBand
+
+
+function Viscosity(theta) {                     // returns viscosity in SI units
+  const TZERO = 288.15;                      // temperature at sealevel, kelvins
+  const BETAVISC = 1.458E-6;              // viscosity term, N sec/(sq.m Sqrt(K)
+  const SUTH = 110.4;                          // Sutherland's constant, kelvins
+
+  var t=TZERO*theta;                                     // temperature, Kelvins
+  return BETAVISC*Math.sqrt(t*t*t)/(t+SUTH);             // Sutherland's formula
+}   // ----------------------------------------------- End of function Viscosity
+
+function Eq43(mach,gamma) {                                      // compute T/Tt
+  var compFactor = 1.0+0.5*(gamma-1.0)*mach*mach;
+  return Math.pow(compFactor, -1.0);
+}   // -------------------------------------------- End of NACA 1135 Function 43
+
+function Eq44(mach,gamma) {                                      // compute p/pt
+  var compFactor = 1.0+0.5*(gamma-1.0)*mach*mach;
+  return Math.pow(compFactor, -gamma/(gamma-1.0));
+}   // -------------------------------------------- End of NACA 1135 Function 44
+
+
+function ComputeAtmosphere() {
+  const TABLESIZE = 8;
+  const REARTH = 6369.0;         // polar radius of the Earth (km)
+  const GMR = 34.163195;         // hydrostatic constant 
+
+  const TZERO      = 288.15;                 // temperature at sealevel, kelvins
+  const PZERO      = 101325.0;             // pressure at sealevel, N/sq.m. = Pa
+  const RHOZERO    = 1.2250;                    // density at sealevel, kg/cu.m.
+  const ASOUNDZERO = 340.294;               // speed of sound at sealevel, m/sec
+
+  const FT2METERS = 0.3048;                   // mult. ft. to get meters (exact)
+  const KELVIN2RANKINE = 1.8;                         // mult deg K to get deg R
+  const PSF2NSM = 47.880258;                      // mult lb/sq.ft to get N/sq.m
+  const SCF2KCM = 515.379;                    // mult slugs/cu.ft to get kg/cu.m
+  const FT2KM = 0.0003048;                                // mult feet to get km
+  
+  const htab = [0.0, 11.0, 20.0, 32.0, 47.0, 51.0, 71.0, 84.852];
+  const ttab = [288.15, 216.65, 216.65, 228.65, 270.65,
+                       270.65, 214.65, 186.87 ];
+  const ptab = [1.0, 2.2336110E-1, 5.4032950E-2, 8.5666784E-3,
+                     1.0945601E-3, 6.6063531E-4, 3.9046834E-5, 3.685010E-6];
+  const gtab = [-6.5, 0.0, 1.0, 2.8, 0.0, -2.8, -2.0, 0.0];
+
+  var gamma = 1.4;
+  var i;
+  var h, tgrad, deltah, tbase, tlocal;
+
+  var sigma,delta,theta;
+  var xx,zz   // temporary buffers
+//  alert("Units");
+
+  var si = document.getElementById("unitsSi").checked;          // si is boolean
+//  alert("Units " + si);
+  var altfield = document.getElementById("altfield").value;
+//  alert("altitude " + altfield);
+  var machfield = document.getElementById("machfield").value;
+//  alert("mach " + machfield);
+
+  var alt = Number(altfield);                        // convert string to double
+  if (isNaN(alt)) {alert("Altitude is not a number."); return; }
+// if si is true, alt is in meters; if si is false, alt is in feet
+
+  var mach = Number(machfield);                      // convert string to double
+  if (isNaN(mach)) {alert("Mach Number is not a number."); return; }
+
+  var altkm;
+  if (si) altkm=alt/1000; else altkm=FT2KM*alt;
+   // Convert geometric to geopotential altitude (kilometers)
+  h=altkm*REARTH/(altkm+REARTH); 
+
+  if (altkm > 86) alert("Algorithm only correct to 86 km (282152 ft). "+
+                        "Only approximate above that altitude."); 
+
+
+//  alert("alt and mach " + alt.toPrecision(4) + " " + mach.toPrecision(4)
+//    + " " + altkm.toPrecision(4) + " " + h.toPrecision(4) );
+    
+  var iband = GetAtmosBand(htab,h);  
+//  alert("atmos band " + iband.toFixed() );
+  tgrad=gtab[iband];
+//  alert("tgrad " + tgrad.toPrecision(4) );
+  deltah=h-htab[iband];
+  tbase=ttab[iband];
+//  alert("tgrad,deltah,tbase " + tgrad.toPrecision(4) + " " +
+//     deltah.toPrecision(4) + " " + tbase.toPrecision(4) );
+
+  tlocal=tbase+tgrad*deltah;
+  theta=tlocal/ttab[0];                                // temperature ratio 
+  delta=1.0;
+  if (tgrad==0.0)                                         // pressure ratio 
+    delta=ptab[iband]*Math.exp(-GMR*deltah/tbase);
+  else
+    delta=ptab[iband]*Math.exp(Math.log(tbase/tlocal)*GMR/tgrad);
+  
+  sigma=delta/theta;
+
+  document.getElementById("thetafield").value = theta.toPrecision(5);
+  document.getElementById("deltafield").value = delta.toExponential(5);
+  document.getElementById("sigmafield").value = sigma.toExponential(5);
+
+//alert("qqqq");
+  xx = TZERO*theta;
+  if (!si) xx = xx*KELVIN2RANKINE;
+  zz = xx.toPrecision(5);
+  if (si) zz = zz + " K"; else zz = zz + " deg R";
+  document.getElementById("tempfield").value = zz;
+
+  xx = PZERO*delta;
+  if (!si) xx = xx/PSF2NSM;
+  zz = xx.toPrecision(5);
+  if (si) zz = zz + " Pascals"; else zz = zz + " lbs/sq.ft.";
+  document.getElementById("pressfield").value = zz;
+  
+  xx = RHOZERO*sigma;
+  if (!si) xx = xx/SCF2KCM;
+  zz = xx.toExponential(5);
+  if (si) zz = zz + " kg/m^3"; else zz = zz + " slugs/ft^3";
+  document.getElementById("denfield").value = zz;
+
+  xx=ASOUNDZERO*Math.sqrt(theta);   // speed of sound 
+  if (!si) xx=xx/FT2METERS;
+  zz = xx.toPrecision(6);
+  if (si) zz = zz + " m/s"; else zz = zz + " ft/s";
+  document.getElementById("asoundfield").value = zz;
+
+  var dynamicViscosity = Viscosity(theta);
+  xx = dynamicViscosity;
+  if (!si) xx=xx/PSF2NSM;
+  zz = xx.toExponential(6);
+  if (si) zz = zz + " kg / m-s  "; else zz = zz + " slugs / ft-sec"
+  document.getElementById("mufield").value = zz;
+ //alert("Viscosity " + dynamicViscosity.toPrecision(6) );
+
+  xx = dynamicViscosity/(RHOZERO*sigma);   // kinematic viscosity
+  if (!si) xx=xx*SCF2KCM/PSF2NSM;
+  zz = xx.toExponential(6);
+  if (si) zz = zz + " m^2/s"; else zz = zz + " ft/s";
+  document.getElementById("nufield").value = zz;
+
+  xx = ASOUNDZERO*Math.sqrt(theta)*mach*RHOZERO*sigma/dynamicViscosity; 
+  if (!si) xx=xx*FT2METERS;
+  xx = xx*1E-6;     // unit Reynolds number (in millions)
+  zz = xx.toPrecision(6);
+  if (si) zz = zz + " million 1/m"; else zz = zz + " million 1/ft";
+  document.getElementById("rnlfield").value = zz;
+
+  xx = ASOUNDZERO*Math.sqrt(theta)*mach;   // velocity 
+  if (!si) xx=xx/FT2METERS;
+  zz = xx.toPrecision(6);
+  if (si) zz = zz + " m/s"; else zz = zz + " ft/sec";
+  document.getElementById("velfield").value = zz;
+
+  xx = 0.5*gamma*PZERO*delta*mach*mach;   // dynamic pressure
+  if (!si) xx=xx/PSF2NSM;
+  zz = xx.toPrecision(6);
+  if (si) zz = zz + " Pascals"; else zz = zz + " lbs/ft^2";
+  document.getElementById("qfield").value = zz;
+
+  xx = TZERO*theta/Eq43(mach,gamma);   // total temperature
+  if (!si) xx=xx*KELVIN2RANKINE;
+  zz = xx.toPrecision(6);
+  if (si) zz = zz + " K"; else zz = zz + " deg R";
+  document.getElementById("ttfield").value = zz;
+
+  xx = PZERO*delta/Eq44(mach,gamma);   // total pressure 
+  if (!si) xx=xx/PSF2NSM;
+  zz = xx.toPrecision(6);
+  if (si) zz = zz + " Pascals"; else zz = zz + " lbs/ft^2";
+  document.getElementById("ptfield").value = zz;
+
+  document.getElementById("results").style.visibility="visible";
+
+}  // -------------------------------------------- End function ComputeAtmosphere
+
+
+
+</script>
+
+</head>
+
+<body onload="HideResults();"> 
+<nav class="crumb">
+<a href="index.html">PDAS home</a> &gt; 
+<a href="contents16.html">Contents</a> &gt;
+<a href="atmos.html">Standard Atmosphere</a> &gt; 
+<a href="atmosapps.html">Applications</a> &gt; 
+Atmosphere Calculator</nav>
+
+<div class="banner">Public Domain Aeronautical Software (PDAS) &nbsp; </div>
+<header><h1>Standard Atmosphere</h1></header>
+
+<!-- This is an example of a form that is not submitted.  All of the computation is done
+     by the included javascript functions. No server calculations needed. -->
+
+<p> Select the units. Enter the desired altitude and Mach number.<br /> 
+    Then click (press) the Compute button.</p>
+
+<form>
+  <input type="radio" name="units" value="SI" id="unitsSi" checked="checked"
+     onchange = "ChangeUnits();" > SI
+  <input type="radio" name="units" value="US" onchange = "ChangeUnits();" > US
+  
+  <input id="ComputeButton" type="button" 
+     value="Compute" onclick="ComputeAtmosphere();" > 
+  <br />
+
+  <label for="altfield"> Altitude</label>
+  <input type="text" name="altfield" id="altfield" size="7"
+      onfocus = "HideResults();" value="0" autofocus>
+
+  <input type="text" size="6" name="altunits" value="meters"
+     id="altunits" readonly="readonly" tabindex=0 > <br />
+
+ 
+  <label for="machfield"> Mach Number</label>
+  <input type="text" name="machfield" id="machfield" size="7"
+    onfocus = "HideResults();" value="0" ><br />
+
+  <fieldset id="results">
+  <label for="thetafield">temperature / sea level temperature = </label>
+  <input type="text" size="25" name="thetafield" id="thetafield" value=" " readonly="readonly" >
+  <br />
+  <label for="deltafield">pressure / sea level pressure = </label>
+  <input type="text" size="25" name="deltafield" id="deltafield" value=" " readonly="readonly" >
+  <br />
+  <label for="sigmafield">density / sea level density = </label>
+  <input type="text" size="25" name="sigmafield" id="sigmafield" value=" " readonly="readonly" >
+  <br />
+
+  <label for="tempfield">Temperature = </label>
+  <input type="text" size="25" name="tempfield" id="tempfield" value=" " readonly="readonly" >
+  <br />
+  <label for="pressfield">Pressure = </label>
+  <input type="text" size="25" name="pressfield" id="pressfield" value=" " readonly="readonly" >
+  <br />
+  <label for="denfield">Density = </label>
+  <input type="text" size="25" name="denfield" id="denfield" value=" " readonly="readonly" >
+  <br />
+
+  <label for="asoundfield">speed of sound = </label>
+  <input type="text" size="25" name="asoundfield" id="asoundfield" value=" " readonly="readonly" >
+  <br />
+
+  <label for="mufield">dynamic viscosity = </label>
+  <input type="text" size="25" name="mufield" id="mufield" value=" " readonly="readonly" >
+  <br />
+
+  <label for="nufield">kinematic viscosity = </label>
+  <input type="text" size="25" name="nufield" id="nufield" value=" " readonly="readonly" >
+  <br />
+
+  <label for="rnlfield">unit Reynolds Number = </label>
+  <input type="text" size="25" name="rnlfield" id="rnlfield" value=" " readonly="readonly" >
+  <br />
+
+  <label for="velfield">velocity = </label>
+  <input type="text" size="25" name="velfield" id="velfield" value=" " readonly="readonly" >
+  <br />
+
+  <label for="qfield">Dynamic Pressure = </label>
+  <input type="text" size="25" name="qfield" id="qfield" value=" " readonly="readonly" >
+  <br />
+
+  <label for="ttfield">total temperature = </label>
+  <input type="text" size="25" name="ttfield" id="ttfield" value=" " readonly="readonly" >
+  <br />
+
+  <label for="ptfield">total pressure = </label>
+  <input type="text" size="25" name="ptfield" id="ptfield" value=" " readonly="readonly" >
+  <br />
+
+  </fieldset>
+
+
+</form>
+
+<footer>
+<a href="order.html">Get a copy</a> of all the programs from
+<cite>Public Domain Computer Programs for the Aeronautical Engineer.</cite><br />
+Last updated: <time datetime="2022-06-02">2022 May 2</time>
+by Ralph Carmichael, pdaerowebmaster AT gmail DOT com
+</footer>
+
+<nav class="crumb">
+<a href="index.html">PDAS home</a> &gt; 
+<a href="contents16.html">Contents</a> &gt;
+<a href="atmos.html">Standard Atmosphere</a> &gt; 
+<a href="atmosapps.html">Applications</a> &gt; 
+Atmosphere Calculator</nav>
+<nav class="banner">Public Domain Aeronautical Software (PDAS) &nbsp; </nav>
+</body>
+</html>

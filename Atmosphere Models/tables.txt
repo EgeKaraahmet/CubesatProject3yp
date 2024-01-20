@@ -1,0 +1,84 @@
+             USER INSTRUCTIONS FOR TABLES
+
+There are several files with the main name of tables, but with different extensions
+supplied as part of the Atmosphere collection. Each is the source code for the
+program in the most popular programming languages of the day. 
+The program "tables", which is given in several languages, produces four 
+atmosphere tables: 
+  1. a table is US units from 0 to 280000 ft. by 5000 ft.,
+  2. a table in SI units form 0 to 86 km by 2 km
+  3. a table in US units from 0 to 65000 ft. by 1000 ft., and 
+  4. a table in SI units from 0 to 20 km by 0.5 km.
+The goal is to produce exactly the same text in all programs, but there
+are small differences. The tables produces have similar names with a suffix that
+distinguishes the different programming languages. For example, the version
+written in C produces us1c.prt,si1c.prt,us2c.prt, and si2c.prt, while the Python version
+produces us1py.prt,si1py.prt,us2py.prt, and si2py.prt, and similar names for
+the other languages. I have collected the
+output files, as produced on my computers in December 2010 using up-to-date
+versions of the different language processors in an archive file named tables.zip
+All of these versions of the program produce a tabular output which should be
+viewed with your terminal or printer set to a monospace font. This means that the
+numbers will line up vertically as if printed with a typewriter. 
+
+When I first released this set of programs in 1994, everyone had a Basic compiler
+(it came with DOS for the IBM PC) and almost everyone had Turbo Pascal installed.
+Over the years, Basic support has dried up and virtually vanished, while Turbo Pascal
+has evolved into Delphi and has become a very expensive platform for speciality
+programmers. I have left the code for these languages in the collection.
+
+The specific instructions for each program follow.
+
+Basic: First compile the program using the source code tables.bas.
+   (If you use Basic, you will know how to do this).
+Run the program and you will produce us1bas.prt, si1bas.prt, us2bas.prt, and si2bas.prt
+
+C: First compile the program with the command
+   gcc tables.c
+producing an executable named a.exe on Windows or a.out on Linux or Mac.
+If you get a message indicating that procedures sqrt or log or exp
+are missing, then add the option -lm to the gcc command.
+Run this executable file and you will produce us1c.prt, si1c.prt, us2c.prt, and si2c.prt
+
+C++: First compile the program with the command
+   g++ tables.cpp
+producing an executable named a.exe on Windows or a.out on Linux or Mac.
+Run this executable file and you will produce us1cpp.prt, si1cpp.prt, 
+us2cpp.prt, and si2cpp.prt
+
+Fortran: First compile the program with the command
+   gfortran tables.f90
+producing an executable named a.exe on Windows or a.out on Linux or Mac.
+Run this executable file and you will produce us1f.prt, si1f.prt, us2f.prt, and si2f.prt
+
+Fortran 77: First compile the program with the command
+   gfortran tables.for
+producing an executable named a.exe on Windows or a.out on Linux or Mac.
+Run this executable file and you will produce us1f77.prt, si1f77.prt, 
+us2f77.prt, and si2f77.prt
+
+IDL: 
+
+Java:
+   Compile the source code named tables.java with the command
+   javac  tables.java   
+   
+Executing the program with the command
+   java tables
+   
+   This will create si1j.txt, si2j.txt, us1j.txt, and us2j.txt.
+
+Pascal: First compile the program by launching Delphi (on Windows) and compiling
+  the program tables.dpr, producing an executable tables.exe.
+Run this executable file and you will produce us1p.prt, si1p.prt, us2p.prt, and si2p.prt
+
+Python: Using Python, you don't compile; just run the program source code:
+   python3 tables.py
+That's all and you will produce us1py.prt, si1py.prt, us2py.prt, si2py.prt
+
+If you are using Python 2 you must use tables2.py by
+   python tables2.py
+
+
+
+
