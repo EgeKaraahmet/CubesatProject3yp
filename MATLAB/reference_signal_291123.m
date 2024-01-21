@@ -10,7 +10,7 @@ clc
 
 %% Initial conditions 
 % Input 
-A=125 * 10^(-4);          %m^2        % spacecraft cross - sectional area
+A=430 * 10^(-4);          %m^2        % spacecraft cross - sectional area
 
 % constant 
 m = 6;                    %kg         % spacecraft mass  m = 3 for ISS
@@ -83,6 +83,7 @@ kepOut = sim('reference_signal_generator','Solver',solv_kep,'FixedStep',step_kep
 %   updating initial conditions, 2nd run using ouput from 1st
 
 %space environment
+A = 125 * (10^(-4));
 ndays1=kepOut.time(end)/60/60/24;  %days since intial time of simulation
 jdate=jdate+ndays1;                %new julian date at beginning of 2nd run
 F107_avg=90.85;         %SFU: updating

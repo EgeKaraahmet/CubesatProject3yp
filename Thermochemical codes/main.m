@@ -1,9 +1,9 @@
 %Run this file
 %change alt1,alt2 to plot between those altitudes
-
+load('Database/US1976_matlabdata.mat')
 alt1 = 80000;
 alt2 = 200000;
-
+CdNewtonian = 4/3;
 
 GammaM = zeros(2011,1);
 Cpmax = zeros(2011,1);
@@ -44,20 +44,34 @@ GammaMcrop = nonzeros(GammaMcrop);
 Cpmaxcrop = nonzeros(Cpmaxcrop);
 
 
-CdM = Cpmaxcrop .* (4/3);
+CdM = Cpmaxcrop .* CdNewtonian;
 
 
-subplot(1,2,1)
+subplot(2,2,1)
 plot(Zmcrop,GammaMcrop)
 ylabel("Specific heat ratio of Air, γ")
 xlabel("Height Z (m)")
 title("γ vs Altitude, US1976 model with Bahadori numerical estimation of γ")
 
 
-subplot(1,2,2)
-plot(Zmcrop,CdM)
+load("Database\SurfaceAreas.mat") %load theta surface area values.
+
+subplot(2,2,2)
+
+plot(ThetaM,AM/100)
+ylabel("Normalized Surface Area normal to flow (cm2)")
+xlabel("Angle (°)")
+title("Projected area / Reference area (100) variation for orbits above 80km")
+
+
+
+
+
+
+subplot(2,2,3)
+plot(Zmcrop/1000,CdM)
 ylabel("Drag coefficient")
-xlabel("Height Z (m)")
-title("Cd vs Altitude, (0° fin angle, modified Newtonian Theory, using γ plot)")
+xlabel("Height Z (km)")
+title("Cd vs Altitude, Design2 (0° fin angle, modified Newtonian Theory, using γ plot)")
 
 
