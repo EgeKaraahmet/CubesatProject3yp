@@ -16,11 +16,11 @@ close all
 
 %% Initial conditions 
 % Input 
-A=110*10^(-4);          %m^2        % spacecraft cross - sectional area
+A=400*10^(-4);          %m^2        % spacecraft cross - sectional area
 
 % constant 
 m = 6;                  %kg         % spacecraft mass  m = 3 for ISS
-Cd=2.2;                             % drag coefficient
+Cd= 2.15;                           % drag coefficient
 BC = m / Cd / A; 
 
 
@@ -86,9 +86,9 @@ stop_h=stop_h*1000;             %m
 
 kepOut = sim('reference_signal_generator_MPC','Solver',solv_kep,'FixedStep',step_kep);
 
+%%
 %   updating initial conditions, 2nd run using ouput from 1st
-
-%space environment
+%space environment 
 ndays1=kepOut.time(end)/60/60/24;  %days since intial time of simulation
 jdate=jdate+ndays1;                %new julian date at beginning of 2nd run
 F107_avg=90.85;         %SFU: updating
@@ -173,7 +173,7 @@ Q_heat = 100;                       % Heat Flux Weight Matrix
 
 % MPC controller setup
 %%%% duration = 3851
-p  = 4000/(100);                    % Prediction Horizon.
+p  = 10000/(100);                    % Prediction Horizon.
 Ts = 100;                  % Sampling time 
 
 xf = [h_end; x_end; V_end; theta_end; gamma_end];       % Desired terminal State.
@@ -217,7 +217,7 @@ end
 
 %% Specify hard bounds. 
 msobj.MV.Min = 100 * 10^(-4);
-msobj.MV.Max =  150 * 10^(-4);
+msobj.MV.Max =  400 * 10^(-4);
 
 
 
