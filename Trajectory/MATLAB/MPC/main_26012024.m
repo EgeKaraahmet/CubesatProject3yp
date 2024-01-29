@@ -1,6 +1,11 @@
 clear
 close all
 %% 
+
+load("US1976_matlabdata.mat")
+
+%%
+1
 % Initial A = 135 cm^2,    Radius = 150 km 
 
 

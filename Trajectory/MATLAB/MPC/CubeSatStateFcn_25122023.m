@@ -39,17 +39,17 @@ gamma = x(5);
 
 %% density 
 % 
-% SH = 8397.5; 
-% rho = 1.225 * exp(- h/(SH));    % my Python model, using SH = 8.43 and rho0=1.221 as constant
-% 
-% %A warning is printed if a negative altitude is predicted by %the simulation (due to Simulink discrete stopping criterion)
-% if h<0
-%    % fprintf('Warning: mismatched density, altitude: %3.2e km',h) 
-%    rho=1.225;
-% end
+SH = 8397.5; 
+rho = 1.225 * exp(- h/(SH));    % my Python model, using SH = 8.43 and rho0=1.221 as constant
+
+%A warning is printed if a negative altitude is predicted by %the simulation (due to Simulink discrete stopping criterion)
+if h<0
+   % fprintf('Warning: mismatched density, altitude: %3.2e km',h) 
+   rho=1.225;
+end
 
 % 29012024 updates
-[~,~,rho] = ATM1976(h);
+% [~,~,rho,~,~] = ATM1976(h);
 
 
 
