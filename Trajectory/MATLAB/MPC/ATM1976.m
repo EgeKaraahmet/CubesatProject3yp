@@ -1,7 +1,7 @@
 function [T,P,rho] = ATM1976(Z)
 %ENTER ALTITUDE AS A MULTIPLE OF 500 IN METERS.
 %OUTPUTS TEMPERATURE,PRESSURE,DENSITY in SI UNITS.
-% addpath('/Users/zhanghanwen/Library/CloudStorage/OneDrive-Nexus365/3YP AtCUBESAT/Simulation/Gayhub/CubesatTrajectory/Thermochemical codes/Database')
+%addpath('/Users/zhanghanwen/Library/CloudStorage/OneDrive-Nexus365/3YP AtCUBESAT/Simulation/Gayhub/CubesatTrajectory/Thermochemical codes/Database')
 load("US1976_matlabdata.mat")
 
 index = find(Zm==Z);

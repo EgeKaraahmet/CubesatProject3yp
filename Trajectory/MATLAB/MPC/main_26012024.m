@@ -1,4 +1,4 @@
-
+clear
 close all
 %% 
 % Initial A = 135 cm^2,    Radius = 150 km 
@@ -20,7 +20,7 @@ A=400*10^(-4);          %m^2        % spacecraft cross - sectional area
 
 % constant 
 m = 6;                  %kg         % spacecraft mass  m = 3 for ISS
-Cd= 2.25;                           % drag coefficient
+Cd= 2.15;                           % drag coefficient
 BC = m / Cd / A; 
 
 
@@ -84,12 +84,46 @@ stop_h=stop_h*1000;             %m
 %Integration step: 30 s
 %First run stops when altitude reachesG stop_h threshold
 
-kepOut = sim('reference_signal_generator_MPC','Solver',solv_kep,'FixedStep',step_kep);
+%% 150km -> 80km
+kepOut1 = sim('reference_signal_generator_MPC','Solver',solv_kep,'FixedStep',step_kep);
 
 %%
 %   updating initial conditions, 2nd run using ouput from 1st
 %space environment 
-ndays1=kepOut.time(end)/60/60/24;  %days since intial time of simulation
+A = 300*10^(-4); 
+BC = m / Cd / A; 
+ndays1=kepOut1.time(end)/60/60/24;  %days since intial time of simulation
+jdate=jdate+ndays1;                %new julian date at beginning of 2nd run
+F107_avg=90.85;         %SFU: updating
+F107_day=86.0;          %SFU: updating
+Kp=1;
+
+
+%re-entry path initial values (at t=0 s)
+h0=kepOut1.h(end);            %m        %height
+x0=kepOut1.x(end);            %m        %travelled distance
+V0=kepOut1.V(end);            %m/s      %orbital speed
+theta0=kepOut1.theta(end);    %rad      %true anomaly
+gamma0=kepOut1.gamma(end);    %rad      %flight path angle
+
+X0 = x0; 
+%Re-entry simulation, atmospheric phase, more accuracy is needed.
+%Smaller integration step required (e.g. 0.1 s)
+%Simulation stops when altitude reaches 0 km (default)
+%% 
+%%%%%%%%%%%%%%%%%%
+stop_h=80 * 10^3;   %m          %final desired altitude
+%%%%%%%%%%%%%%%%%%
+
+%% 150km -> 80km
+kepOut2 = sim('reference_signal_generator_MPC','Solver',solv_kep,'FixedStep',step_kep);
+
+%%
+A = 225*10^(-4); 
+BC = m / Cd / A; 
+%   updating initial conditions, 2nd run using ouput from 1st
+%space environment 
+ndays1=kepOut2.time(end)/60/60/24;  %days since intial time of simulation
 jdate=jdate+ndays1;                %new julian date at beginning of 2nd run
 F107_avg=90.85;         %SFU: updating
 F107_day=86.0;          %SFU: updating
@@ -97,23 +131,25 @@ Kp=1;
 
 space_coes = [jdate;F107_avg;F107_day;Kp];
 
-%re-entry path initial values (at t=0 s)
-h0=kepOut.h(end);            %m        %height
-x0=kepOut.x(end);            %m        %travelled distance
-V0=kepOut.V(end);            %m/s      %orbital speed
-theta0=kepOut.theta(end);    %rad      %true anomaly
-gamma0=kepOut.gamma(end);    %rad      %flight path angle
 
+%re-entry path initial values (at t=0 s)
+h0=kepOut2.h(end);            %m        %height
+x0=kepOut2.x(end);            %m        %travelled distance
+V0=kepOut2.V(end);            %m/s      %orbital speed
+theta0=kepOut2.theta(end);    %rad      %true anomaly
+gamma0=kepOut2.gamma(end);    %rad      %flight path angle
 
 X0 = x0; 
 %Re-entry simulation, atmospheric phase, more accuracy is needed.
 %Smaller integration step required (e.g. 0.1 s)
 %Simulation stops when altitude reaches 0 km (default)
+%% 
 %%%%%%%%%%%%%%%%%%
 stop_h=0;   %m          %final desired altitude
-%%%%%%%%%%%%%%%%%%
 
-atmOut = sim('reference_signal_generator_MPC','Solver',solv_atm,'FixedStep',step_atm,'StartTime','kepOut.time(end)');
+
+%% 
+atmOut = sim('reference_signal_generator_MPC','Solver',solv_atm,'FixedStep',step_atm,'StartTime','kepOut2.time(end)');
 
 h_end=atmOut.h(end);         %m        %altitude
 x_end=atmOut.x(end);         %m        %travelled distance
@@ -125,21 +161,30 @@ gamma_end=atmOut.gamma(end);    %rad      %flight path angle
 %% Results analysis
 %   union of 1st and 2nd run results
 
-h_reference_signal=[kepOut.h;atmOut.h];
-x_reference_signal=[kepOut.x;atmOut.x];
-time_reference_signal=[kepOut.time;atmOut.time];
-V_reference_signal=[kepOut.V;atmOut.V];
-Vx_reference_signal=[kepOut.Vx;atmOut.Vx];
-Vz_reference_signal=[kepOut.Vz;atmOut.Vz];
-gamma_reference_signal=[kepOut.gamma;atmOut.gamma];
-theta_reference_signal=[kepOut.theta;atmOut.theta];
-rho_reference_signal=[kepOut.rho;atmOut.rho];
-dotV_reference_signal=[kepOut.dotV;atmOut.dotV];
+h_reference_signal=[kepOut1.h;kepOut2.h;atmOut.h];
+x_reference_signal=[kepOut1.x;kepOut2.x;atmOut.x];
+time_reference_signal=[kepOut1.time;kepOut2.time;atmOut.time];
+V_reference_signal=[kepOut1.V;kepOut2.V;atmOut.V];
+Vx_reference_signal=[kepOut1.Vx;kepOut2.Vx;atmOut.Vx];
+Vz_reference_signal=[kepOut1.Vz;kepOut2.Vz;atmOut.Vz];
+gamma_reference_signal=[kepOut1.gamma;kepOut2.gamma;atmOut.gamma];
+theta_reference_signal=[kepOut1.theta;kepOut2.gamma;atmOut.theta];
+rho_reference_signal=[kepOut1.rho;kepOut2.rho;atmOut.rho];
+dotV_reference_signal=[kepOut1.dotV;kepOut2.dotV;atmOut.dotV];
 
 testing = atmOut.time; 
-x_state_reference = [atmOut.h, atmOut.x, atmOut.V, atmOut.theta, atmOut.gamma];
 
 
+%% State reference 
+h_reference_state = [kepOut2.h;atmOut.h];
+x_reference_state = [kepOut2.x;atmOut.x];
+V_reference_state = [kepOut2.V;atmOut.V];
+theta_reference_state = [kepOut2.theta;atmOut.theta];
+gamma_reference_state = [kepOut2.gamma;atmOut.gamma];
+
+x_state_reference = [h_reference_state, x_reference_state, V_reference_state, theta_reference_state, gamma_reference_state];
+
+1; 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -291,38 +336,38 @@ end
 
 %% 
 % Assuming h_plot is xHistory1(:,1)
-h_plot_op = xHistory1(:,1);
-X_plot_op = xHistory1(:,2);
-V_plot_op = xHistory1(:,3);
-theta_plot_op = xHistory1(:,4);
-gamma_plot_op = xHistory1(:,5);
+h_plot = xHistory1(:,1);
+X_plot = xHistory1(:,2);
+V_plot = xHistory1(:,3);
+theta_plot = xHistory1(:,4);
+gamma_plot = xHistory1(:,5);
 T_plot = TOUT;
-u_plot_op = uHistory1; 
+u_plot = uHistory1; 
 
 % % % Create a logical index to exclude negative values
-positive_indices = h_plot_op >= 0;
+positive_indices = h_plot >= 0;
 % % 
 % % % Filter the vectors using the logical index
-h_plot_op = h_plot_op(positive_indices);
-X_plot_op = X_plot_op(positive_indices);
-V_plot_op = V_plot_op(positive_indices);
-theta_plot_op = theta_plot_op(positive_indices);
-gamma_plot_op = gamma_plot_op(positive_indices);
+h_plot = h_plot(positive_indices);
+X_plot = X_plot(positive_indices);
+V_plot = V_plot(positive_indices);
+theta_plot = theta_plot(positive_indices);
+gamma_plot = gamma_plot(positive_indices);
 % T_plot = T_plot(positive_indices);
-u_plot_op = u_plot_op(positive_indices);
+u_plot = u_plot(positive_indices);
 
-x_plot_out = [h_plot_op X_plot_op V_plot_op theta_plot_op gamma_plot_op];
+x_plot_out = [h_plot X_plot V_plot theta_plot gamma_plot];
 
 h_reference_atm = [atmOut.h];
 x_reference_atm = [atmOut.x];
 
-[p_op,~] = size(h_plot_op);
+[p_op,~] = size(h_plot);
 %%
 % Plotting using zero-order hold
 figure
 subplot(2,2,1)
-n = 1:length(u_plot_op);
-stairs(n, u_plot_op, 'b-', 'LineWidth', 2);
+n = 1:length(u_plot);
+stairs(n, u_plot, 'b-', 'LineWidth', 2);
 
 % Adding labels and title
 ylabel('u');
@@ -335,14 +380,14 @@ title('Zero-Order Hold Plot');
 
 
 subplot(2,2,2)
-plot(X_plot_op, h_plot_op, 'r', x_reference_atm, h_reference_atm, 'b')
+plot(X_plot, h_plot, 'r', x_reference_atm, h_reference_atm, 'b')
 title('Nonlinear MPC output')
 
 % Adding legend
 legend('Nonlinear MPC output (red)', 'Reference altitude vs. distance (blue)')
 
 
-A_target = u_plot_op(end);   %m^2        % spacecraft cross - sectional area
+A_target = u_plot(end);   %m^2        % spacecraft cross - sectional area
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -511,16 +556,13 @@ gamma_plot_kmf = [gamma_plot_kmf_non_negative; gamma_plot_kmf(index_greatestNega
 
 %%
 subplot(2,2,3)
-plot(X_plot_op, h_plot_op, 'r',X_plot_kmf,h_plot_kmf,'*g')
+plot(X_plot, h_plot, 'r',X_plot_kmf,h_plot_kmf,'*g')
 title('OP, KMF')
 
 subplot(2,2,4)
-plot(X_plot_op, h_plot_op, 'r', x_reference_atm, h_reference_atm, 'b',X_plot_kmf,h_plot_kmf,'*g')
+plot(X_plot, h_plot, 'r', x_reference_atm, h_reference_atm, 'b',X_plot_kmf,h_plot_kmf,'*g')
 title('RS, OP, KMF')
 
 % Adding legend
 legend('Nonlinear MPC output (red)', 'Reference altitude vs. distance (blue)','kmf (green)')
-
-%%
-
 

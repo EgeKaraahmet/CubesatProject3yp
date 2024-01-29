@@ -30,17 +30,22 @@ gamma = x(5);
 % u; 
 
 %% density 
-SH = 8397.5; 
-rho = 1.225 * exp(- h/(SH));    % my Python model, using SH = 8.43 and rho0=1.221 as constant
-    
-%A warning is printed if a negative altitude is predicted by %the simulation (due to Simulink discrete stopping criterion)
-if h<0
-   % fprintf('Warning: mismatched density, altitude: %3.2e km',h) 
-   rho=1.225;
-end
+% SH = 8397.5; 
+% rho = 1.225 * exp(- h/(SH));    % my Python model, using SH = 8.43 and rho0=1.221 as constant
+% 
+% %A warning is printed if a negative altitude is predicted by %the simulation (due to Simulink discrete stopping criterion)
+% if h<0
+%    % fprintf('Warning: mismatched density, altitude: %3.2e km',h) 
+%    rho=1.225;
+% end
+
+[T,P,rho] = ATM1976(h);
+R = 8.314;                  % gas constant: J / K / mol 
+
 
 %% Gravity acceleration 
 grav = mi*1e9 / (Re+h)^2;
+
 
 
 %% Jacobian 
@@ -70,3 +75,4 @@ B = [ 0;
      df3du;
       0;
       0];
+
