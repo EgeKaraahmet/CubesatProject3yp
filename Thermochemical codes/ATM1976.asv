@@ -11,18 +11,16 @@ load("Database/US1976_matlabdata.mat")
 if mod(Z,500) ~= 0
     remainder = mod(Z,500);
     Z1 = Z - remainder;
-    Z2 = Z1 + 500;
 
 end
 
 
-index1 = find(Zm==Z1);
-index2 = find(Zm==Z2);
+index1 = find(Zm1==Z1);
+index2 = find(Zm2==Z2);
 
 
 
 
-weight = remainder / 500;
 
 
 
@@ -42,11 +40,8 @@ grav_const2 = g(index2);
 MolecularWeight2 = M(index2);
 
 
-
-
-
-rho = ((1-weight)*rho1)+((weight)*rho2);
-T = ((1-weight)*T1+(weight)*T2);
-P = ((1-weight)*P1+(weight)*P2);
-grav_const = ((1-weight)*grav_const1 + (weight)*grav_const2);
-MolecularWeight = ((1-weight)*MolecularWeight1 + (weight)*MolecularWeight2);
+rho = (rho1+rho2) / 2;
+T = (T1+T2) / 2;
+P = (P1+P2) / 2;
+grav_const = (grav_const1 + grav_const2) / 2;
+MolecularWeight = (MolecularWeight1 + MolecularWeight2) / 2;
