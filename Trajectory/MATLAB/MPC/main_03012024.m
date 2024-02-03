@@ -217,7 +217,7 @@ end
 
 %% Specify hard bounds. 
 msobj.MV.Min = 100 * 10^(-4);
-msobj.MV.Max =  400 * 10^(-4);
+msobj.MV.Max =  150 * 10^(-4);
 
 
 
@@ -317,16 +317,6 @@ h_reference_atm = [atmOut.h];
 x_reference_atm = [atmOut.x];
 
 [p_op,~] = size(h_plot_op);
-%%
-% Plotting using zero-order hold
-figure
-subplot(2,2,1)
-n = 1:length(u_plot_op);
-stairs(n, u_plot_op, 'b-', 'LineWidth', 2);
-
-% Adding labels and title
-ylabel('u');
-title('Zero-Order Hold Plot');
 
 %%%
 % I doubt that the controller is not working properly. This is because my
@@ -334,12 +324,6 @@ title('Zero-Order Hold Plot');
 % sampling time. 
 
 
-subplot(2,2,2)
-plot(X_plot_op, h_plot_op, 'r', x_reference_atm, h_reference_atm, 'b')
-title('Nonlinear MPC output')
-
-% Adding legend
-legend('Nonlinear MPC output (red)', 'Reference altitude vs. distance (blue)')
 
 
 A_target = u_plot_op(end);   %m^2        % spacecraft cross - sectional area
@@ -404,8 +388,7 @@ validateFcns(msobj_tracking,x0,u0);
 %
 % Because an EKF requires a discrete-time model, you use the trapezoidal
 % rule to transition from x(k) to x(k+1), which requires the solution of
-% |nx| nonlinear algebraic equations. For more information, open
-% |FlyingRobotStateFcnDiscreteTime.m|.
+% |nx| nonlinear algebraic equations. 
 DStateFcn = @(xk,uk,Ts) CubeSatStateFcnDiscreteTime_25122023(xk,uk,Ts);
 
 %%
@@ -426,6 +409,7 @@ xHistory_kmf = x0';
 uHistory_kmf = [];
 
 lastMV = A_target;
+
 %%
 % The reference signals are the optimal state trajectories computed at the
 % planning stage. When passing these trajectories to the nonlinear MPC
@@ -457,7 +441,8 @@ for k = 1:Tsteps
     predict(EKF,uk,Ts);
 
     % Store the control move and update the last MV for the next step.
-    uHistory_kmf(k,:) = uk'; %#ok<*SAGROW>
+    uHistory_kmf(k,:) = uk'; 
+    
     lastMV = uk;
 
     % Update the real plant states for the next step by solving the
@@ -467,6 +452,7 @@ for k = 1:Tsteps
 
     % Store the state values.
     xHistory_kmf(k+1,:) = YOUT(end,:);
+    uHistory_kmf(k+1,:) = uk;
 
     % Update the status bar.
     waitbar(k/Tsteps, hbar);
@@ -509,12 +495,41 @@ gamma_plot_kmf = [gamma_plot_kmf_non_negative; gamma_plot_kmf(index_greatestNega
 
 
 
+%% plots 
 %%
-subplot(2,2,3)
-plot(X_plot_op, h_plot_op, 'r',X_plot_kmf,h_plot_kmf,'*g')
+% Plotting using zero-order hold
+figure
+subplot(1,2,1)
+n = 1:length(u_plot_op);
+stairs(n, u_plot_op, 'b-', 'LineWidth', 2);
+
+
+% Adding labels and title
+ylabel('u');
+title('Zero-Order Hold Plot');
+
+subplot(1,2,2)
+n = 1:length(u_plot_kmf);
+stairs(n, u_plot_kmf, 'b-', 'LineWidth', 2);
+
+
+% Adding labels and title
+ylabel('u');
+title('Zero-Order Hold Plot');
+%%
+figure
+subplot(1,3,1)
+plot(X_plot_op, h_plot_op, 'r', x_reference_atm, h_reference_atm, 'b')
+title('Nonlinear MPC output')
+
+% Adding legend
+legend('Nonlinear MPC output (red)', 'Reference altitude vs. distance (blue)')
+
+subplot(1,3,2)
+plot(X_plot_op, h_plot_op, 'r',X_plot_kmf,h_plot_kmf,'*g-')
 title('OP, KMF')
 
-subplot(2,2,4)
+subplot(1,3,3)
 plot(X_plot_op, h_plot_op, 'r', x_reference_atm, h_reference_atm, 'b',X_plot_kmf,h_plot_kmf,'*g')
 title('RS, OP, KMF')
 

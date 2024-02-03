@@ -48,8 +48,8 @@ if h<0
    rho=1.225;
 end
 
-% 29012024 updates
-% [~,~,rho,~,~] = ATM1976(h);
+% % 01022024 updates
+% [rho,SH] = exp_model(h); 
 
 
 

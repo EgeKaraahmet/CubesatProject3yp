@@ -43,6 +43,8 @@ end
 % R = 8.314 / 10^(-3);                  % gas constant: J / K / kmol 
 % SH = R*T/(MolecularWeight*grav_const);
 
+%  [rho,SH] = exp_model(h); 
+
 
 %% Gravity acceleration 
 grav = mi*1e9 / (Re+h)^2;
