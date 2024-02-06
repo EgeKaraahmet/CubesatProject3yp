@@ -29,14 +29,13 @@ p  = pvcost(end);                         % Prediction Horizon
 
 h = x(1);
 V = x(3);
-q_ref = 200 * 10^3; 
 rcurv = 0.1; 
 
 % heat flux
 SH = 8397.5; 
 rho = 1.225 * exp(- h/(SH));    % my Python model, using SH = 8.43 and rho0=1.221 as constant
 q_max=1.83e-4*V.^3.*sqrt(rho/rcurv);
-
+q_max_reference = 200 * 10^3; 
 
 
 

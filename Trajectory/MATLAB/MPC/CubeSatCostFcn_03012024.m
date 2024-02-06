@@ -35,7 +35,9 @@ rcurv = 0.1;
 % heat flux
 SH = 8397.5; 
 rho = 1.225 * exp(- h/(SH));    % my Python model, using SH = 8.43 and rho0=1.221 as constant
-% q_max=1.83e-4*V.^3.*sqrt(rho/rcurv);
+
+q_max=1.83e-4*V.^3.*sqrt(rho/rcurv);
+q_max_reference = 200 * 10^3; 
 
 
 
@@ -51,7 +53,7 @@ if stage == p + 1
     L = 0.5 * (x - xf).' * Sf * (x - xf);
 else
     % Calculate cost for intermediate stages
-    % L = 0.5*(x - xf).'*Q*(x - xf) + 0.5*u.'*R*u + (q_max - q_ref) * Q_heat *(q_max-q_ref);
+    % L = 0.5*(x - xf).'*Q*(x - xf) + 0.5*u.'*R*u + (q_max - q_max_reference) * Q_heat *(q_max-q_max_reference);
     % L = 0.5*(x - xf).'*Q*(x - xf) + (q_max - q_ref) * Q_heat *(q_max-q_ref);
     L = 0.5*(x - xf).'*Q*(x - xf) + 0.5*u.'*R*u; 
 end

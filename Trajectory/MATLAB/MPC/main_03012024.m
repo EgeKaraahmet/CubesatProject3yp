@@ -171,10 +171,16 @@ R  = 10;                            % Control Weighting Matrix.
 Q_heat = 100;                       % Heat Flux Weight Matrix
 
 
+Sf = [30; 30; 30; 30; 30];     % Terminal Weight Matrix.
+Q  = [100; 100; 100; 100; 100];          % State Weight Matrix.
+R  = 10;                            % Control Weighting Matrix.
+Q_heat = 100;                       % Heat Flux Weight Matrix
+
 % MPC controller setup
 %%%% duration = 3851
-p  = 10000/(100);                    % Prediction Horizon.
-Ts = 100;                  % Sampling time 
+Ts = 50;                             % Sampling time
+p  = 10000/(Ts);                    % Prediction Horizon.
+                          
 
 xf = [h_end; x_end; V_end; theta_end; gamma_end];       % Desired terminal State.
 
@@ -284,7 +290,8 @@ for k = 1:(Duration/Ts)
     uHistory1(k+1,:) = uk;
 
     % Compute and store the cost for the current iteration
-    L = CubeSatCostFcn_03012024(p,xHistory1(k,:), uk,pvcost)
+    L = CubeSatCostFcn_03012024(p,xHistory1(k,:), uk,pvcost);
+    L2N_L = norm(L, 2)
 end
 
 

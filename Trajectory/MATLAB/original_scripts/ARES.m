@@ -10,10 +10,10 @@ close all
 %% Initial conditions 
 % Input 
 m = 6;                    %kg         % spacecraft mass  m = 3 for ISS
-A=(10e-2)^2;            %m^2        % spacecraft cross - sectional area
+A=400*10^(-4);             %m^2        % spacecraft cross - sectional area
 Cd=2.2;                             % drag coefficient
 BC = m / Cd / A; 
-BC = 122; 
+% BC = 122; 
 
 %constants
 mi=398600.44;           %km^3/s^2   % Earth G*M
@@ -56,7 +56,7 @@ V0=V0-dV;                         % km/s       % effective inital speed
 %integration method
 solv_kep='ode4';                  % solver method for orbital phase. ode4 is runge kutta
 step_kep='30';  %s                % keplerian intergartor fixed step size   % 30 
-stop_h=150;     %km               % thres alt for switch from Kep. to Atm. phase 
+stop_h=80;     %km               % thres alt for switch from Kep. to Atm. phase 
 
 solv_atm = 'ode4';                % solver method for re-entry phase. ode4 is runge kutta
 step_atm='0.1'; %s                % atmospheric integrator fixed step size     % 0.1
@@ -79,6 +79,8 @@ kepOut = sim('SatSim_ARES','Solver',solv_kep,'FixedStep',step_kep);
 %   updating initial conditions, 2nd run using ouput from 1st
 
 %space environment
+A=125*10^(-4); 
+BC = m / Cd / A; 
 ndays1=kepOut.time(end)/60/60/24;  %days since intial time of simulation
 jdate=jdate+ndays1;                %new julian date at beginning of 2nd run
 F107_avg=90.85;         %SFU: updating
