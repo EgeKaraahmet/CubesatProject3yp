@@ -79,7 +79,7 @@ kepOut = sim('Copy_of_SatSim_ARES','Solver',solv_kep,'FixedStep',step_kep);
 %   updating initial conditions, 2nd run using ouput from 1st
 
 %space environment
-A=125*10^(-4); 
+A=400*10^(-4); 
 BC = m / Cd / A; 
 ndays1=kepOut.time(end)/60/60/24;  %days since intial time of simulation
 jdate=jdate+ndays1;                %new julian date at beginning of 2nd run

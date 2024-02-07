@@ -1,5 +1,5 @@
 
-[rho_interp, SH_interp] = interpolate_exponential_model(56.34)
+[rho_interp, SH_interp] = interpolate_exponential_model(10)
 
 function [rho_interp, SH_interp] = interpolate_exponential_model(h_input)
    
@@ -20,4 +20,5 @@ function [rho_interp, SH_interp] = interpolate_exponential_model(h_input)
     % Interpolate for the given height values
     rho_interp = interp1(h0, rho, h_input, 'linear');
     SH_interp = interp1(h0, SH, h_input, 'linear');
+    rho_0 = rho_interp/(exp((h_input)))
 end
