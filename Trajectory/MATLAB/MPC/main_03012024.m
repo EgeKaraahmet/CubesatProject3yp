@@ -16,7 +16,7 @@ close all
 
 %% Initial conditions 
 % Input 
-A=400*10^(-4);          %m^2        % spacecraft cross - sectional area
+A=403*10^(-4);          %m^2        % spacecraft cross - sectional area
 
 % constant 
 m = 6;                  %kg         % spacecraft mass  m = 3 for ISS
@@ -66,7 +66,7 @@ V0=V0-dV;                         % km/s       % effective inital speed
 %integration method
 solv_kep='ode4';                  % solver method for orbital phase. ode4 is runge kutta
 step_kep='30';  %s                % keplerian intergartor fixed step size   % 30 
-stop_h=150;     %km               % thres alt for switch from Kep. to Atm. phase 
+stop_h=80;     %km               % thres alt for switch from Kep. to Atm. phase 
 
 solv_atm = 'ode4';                % solver method for re-entry phase. ode4 is runge kutta
 step_atm='0.1'; %s                % atmospheric integrator fixed step size     % 0.1
@@ -88,6 +88,9 @@ kepOut = sim('reference_signal_generator_MPC','Solver',solv_kep,'FixedStep',step
 
 %%
 %   updating initial conditions, 2nd run using ouput from 1st
+%A=125*10^(-4);          %m^2        % spacecraft cross - sectional area
+%BC = m / Cd / A; 
+
 %space environment 
 ndays1=kepOut.time(end)/60/60/24;  %days since intial time of simulation
 jdate=jdate+ndays1;                %new julian date at beginning of 2nd run
@@ -500,49 +503,5 @@ theta_plot_kmf = [theta_plot_kmf_non_negative; theta_plot_kmf(index_greatestNega
 gamma_plot_kmf = [gamma_plot_kmf_non_negative; gamma_plot_kmf(index_greatestNegativeElement)];
 % u_plot_kmf = [u_plot_kmf_non_negative; u_plot_kmf(h_kmf_negative_indices)];
 
-
-
-%% plots 
-%%
-% Plotting using zero-order hold
-figure
-subplot(1,2,1)
-n = 1:length(u_plot_op);
-stairs(n, u_plot_op, 'b-', 'LineWidth', 2);
-
-
-% Adding labels and title
-ylabel('u');
-title('Zero-Order Hold Plot');
-
-subplot(1,2,2)
-n = 1:length(u_plot_kmf);
-stairs(n, u_plot_kmf, 'b-', 'LineWidth', 2);
-
-
-% Adding labels and title
-ylabel('u');
-title('Zero-Order Hold Plot');
-%%
-figure
-subplot(1,3,1)
-plot(X_plot_op, h_plot_op, 'r', x_reference_atm, h_reference_atm, 'b')
-title('Nonlinear MPC output')
-
-% Adding legend
-legend('Nonlinear MPC output (red)', 'Reference altitude vs. distance (blue)')
-
-subplot(1,3,2)
-plot(X_plot_op, h_plot_op, 'r',X_plot_kmf,h_plot_kmf,'*g-')
-title('OP, KMF')
-
-subplot(1,3,3)
-plot(X_plot_op, h_plot_op, 'r', x_reference_atm, h_reference_atm, 'b',X_plot_kmf,h_plot_kmf,'*g')
-title('RS, OP, KMF')
-
-% Adding legend
-legend('Nonlinear MPC output (red)', 'Reference altitude vs. distance (blue)','kmf (green)')
-
-%%
 
 

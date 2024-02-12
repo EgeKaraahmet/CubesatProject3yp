@@ -36,6 +36,30 @@ grid minor
 legend('De Cecio''s Work', 'Group Design')
 title('Trajectory Dynamics System - Horizontal Distance vs Altitude')
 
+%
+% Filter out the parts with h >= 150 km
+% Filter out the parts with h >= 150 km
+filtered_indices = h < 100;
+filtered_x = -x(filtered_indices);
+filtered_h = h(filtered_indices);
+
+% Use the filtered indices for h to filter h_my_model
+filtered_indices = h_my_model < 100;
+filtered_h_my_model = h_my_model(filtered_indices);
+filtered_x_my_model = x_my_model(filtered_indices);
+
+% Plot the filtered data
+figure;
+plot(filtered_x, filtered_h, 'b', -filtered_x_my_model, filtered_h_my_model, 'r');
+xlabel('Horizontal Distance traveled [km]');
+ylabel('Altitude [km]');
+grid on;
+grid minor;
+legend('De Cecio''s Work', 'Group Design');
+title('Trajectory Dynamics System - Horizontal Distance vs Altitude (Altitude < 150 km)');
+
+
+
 % Figure 3
 figure
 plot(h, heat1, 'b', h_my_model, heat1_my_model, 'r')

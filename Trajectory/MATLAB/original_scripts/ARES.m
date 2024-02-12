@@ -9,7 +9,7 @@ close all
 
 %% Initial conditions 
 % Input 
-m = 6;                    %kg         % spacecraft mass  m = 3 for ISS
+m = 3;                    %kg         % spacecraft mass  m = 3 for ISS
 A=400*10^(-4);             %m^2        % spacecraft cross - sectional area
 Cd=2.2;                             % drag coefficient
 BC = m / Cd / A; 
@@ -79,7 +79,7 @@ kepOut = sim('SatSim_ARES','Solver',solv_kep,'FixedStep',step_kep);
 %   updating initial conditions, 2nd run using ouput from 1st
 
 %space environment
-A=125*10^(-4); 
+A = 125 * 10^(-4); 
 BC = m / Cd / A; 
 ndays1=kepOut.time(end)/60/60/24;  %days since intial time of simulation
 jdate=jdate+ndays1;                %new julian date at beginning of 2nd run
