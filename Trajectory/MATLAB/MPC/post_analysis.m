@@ -1,4 +1,5 @@
 %% Plots 
+close all
 %% plots 
 %%
 % Plotting using zero-order hold
@@ -44,7 +45,7 @@ plot(abs(X_plot_op)/1000, h_plot_op/1000, 'r', abs(x_reference_atm)/1000, h_refe
 title('RS , OP')
 
 % Adding legend
-legend('Nonlinear MPC output (red)', 'Reference altitude vs. distance (blue)')
+legend('Trajectory Tracking (no EKF)', 'Reference altitude vs. distance ')
 
 xlabel('Horizontal distance travelled (km)');
 ylabel('Altitude (km)');
@@ -61,7 +62,7 @@ plot(abs(X_plot_op)/1000, h_plot_op/1000, 'r', abs(x_reference_atm)/1000, h_refe
 title('RS, OP, KMF')
 
 % Adding legend
-legend('Nonlinear MPC output (red)', 'Reference altitude vs. distance (blue)','kmf (green)')
+legend('Trajectory Tracking (no EKF)', 'Reference altitude vs. distance ','Trajectory Tracking (with EKF)')
 
 xlabel('Horizontal distance travelled (km)');
 ylabel('Altitude (km)');
@@ -71,34 +72,37 @@ ylabel('Altitude (km)');
 % Plot 1: Nonlinear MPC output
 figure
 plot(abs(X_plot_op)/1000, h_plot_op/1000, 'r', abs(x_reference_atm)/1000, h_reference_atm/1000, 'b')
-title('Nonlinear MPC output')
+title('Altitude vs. horizontal distance travelled plot')
 xlabel('Horizontal distance travelled (km)');
 ylabel('Altitude (km)');
-legend('Nonlinear MPC output (red)', 'Reference altitude vs. distance (blue)')
+legend('Trajectory Tracking (no EKF)', 'Reference altitude vs. distance ')
 
 % Plot 2: OP, KMF
 figure
 plot(abs(X_plot_op)/1000, h_plot_op/1000, 'r', abs(X_plot_kmf)/1000, h_plot_kmf/1000, '*g')
-title('OP, KMF')
+title('Altitude vs. horizontal distance travelled plot')
+ylim([0, inf]);
 xlabel('Horizontal distance travelled (km)');
 ylabel('Altitude (km)');
-legend('Nonlinear MPC output (red)', 'KMF (green)')
+legend('Trajectory Tracking (no EKF)', 'Trajectory Tracking (with EKF)')
 
 % Plot 3: RS, KMF
 figure
 plot(abs(x_reference_atm)/1000, h_reference_atm/1000, 'b', abs(X_plot_kmf)/1000, h_plot_kmf/1000, '-*g')
-title('RS, KMF')
+title('Altitude vs. horizontal distance travelled plot')
+ylim([0, inf]);
 xlabel('Horizontal distance travelled (km)');
 ylabel('Altitude (km)');
-legend('Reference altitude vs. distance (blue)', 'KMF (green)')
+legend('Reference altitude vs. distance ', 'Trajectory Tracking (with EKF)')
 
 % Plot 4: RS, OP, KMF
 figure
 plot(abs(X_plot_op)/1000, h_plot_op/1000, 'r', abs(x_reference_atm)/1000, h_reference_atm/1000, 'b', abs(X_plot_kmf)/1000, h_plot_kmf/1000, '-*g')
-title('RS, OP, KMF')
+title('Altitude vs. horizontal distance travelled plot')
+ylim([0, inf]);
 xlabel('Horizontal distance travelled (km)');
 ylabel('Altitude (km)');
-legend('Nonlinear MPC output (red)', 'Reference altitude vs. distance (blue)', 'KMF (green)')
+legend('Trajectory Tracking (no EKF)', 'Reference altitude vs. distance ', 'Trajectory Tracking (with EKF)')
 
 
 
@@ -111,4 +115,4 @@ x_kmf_landing = abs(X_plot_kmf(end))/1000;
 position_ref = sqrt(altitude^2+x_ref_landing^2);
 position_kmf = sqrt(altitude^2+x_kmf_landing^2);
 
-position_kmf - position_ref
+position_kmf- position_ref
