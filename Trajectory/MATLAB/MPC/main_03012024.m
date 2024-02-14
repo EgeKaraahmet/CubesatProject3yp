@@ -16,13 +16,13 @@ close all
 
 %% Initial conditions 
 % Input 
-% A=403*10^(-4);          %m^2        % spacecraft cross - sectional area 
+A=403*10^(-4);          %m^2        % spacecraft cross - sectional area 
 % A=402.5 * 10^(-4);
 % A=402   * 10^(-4);
 % A=401.5 * 10^(-4);
 % A=401   * 10^(-4);
 % A=400.5 * 10^(-4); 
- A=400   * 10^(-4);
+% A=400   * 10^(-4);
 % first column 403 cm^2 ; 
 % 2nd column 402.5 cm^2 ; 
 % 3rd column 402   cm^2 ;
@@ -518,4 +518,4 @@ u_plot_kmf = uHistory_kmf;
 % gamma_plot_kmf = [gamma_plot_kmf_non_negative; gamma_plot_kmf(index_greatestNegativeElement)];
 
 %%
-save("A400.mat","x_plot_out","xHistory_kmf")
+% save("A400.mat","x_plot_out","xHistory_kmf")
