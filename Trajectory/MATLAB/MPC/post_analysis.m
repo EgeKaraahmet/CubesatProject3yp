@@ -25,7 +25,7 @@ title('Zero-Order Hold Plot');
 figure
 
 n = 1:length(u_plot_op);
-stairs(n, u_plot_op - 100*10^(-4), 'b-', 'LineWidth', 2);
+stairs(n, (u_plot_op - 100*10^(-4))*10^(4), 'b-', 'LineWidth', 2);
 
 % Adding labels and title
 xlabel('Stages');
