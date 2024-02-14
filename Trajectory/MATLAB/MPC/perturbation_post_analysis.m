@@ -35,7 +35,7 @@ X_plot_kmf_400p5 = xHistory_kmf(:,2);
 load('A400.mat')
 h_plot_kmf_400 = xHistory_kmf(:,1);
 X_plot_kmf_400 = xHistory_kmf(:,2);
-
+%%
 plot(abs(X_plot_kmf_400),h_plot_kmf_400, ...
     abs(X_plot_kmf_400p5),h_plot_kmf_400p5, ...
     abs(X_plot_kmf_401),h_plot_kmf_401, ...
@@ -48,4 +48,4 @@ plot(abs(X_plot_kmf_400),h_plot_kmf_400, ...
 ylim([0, inf]);
 xlabel('Horizontal distance travelled (km)');
 ylabel('Altitude (km)');
-legend('Trajectory Tracking (no EKF)', 'Reference altitude vs. distance ', 'Trajectory Tracking (with EKF)')
+

@@ -1,3 +1,0 @@
-%% Extract data
-h_plot_kmf_403 = xHistory_kmf_403(:,1);
-X_plot_kmf_403 = xHistory_kmf_403(:,2);

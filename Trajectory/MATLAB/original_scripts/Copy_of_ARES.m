@@ -10,7 +10,7 @@ close all
 %% Initial conditions 
 % Input 
 m = 3;                    %kg         % spacecraft mass  m = 3 for QURMAN; 6 for our cubesat
-A=125*10^(-4);            %m^2        % spacecraft cross - sectional area
+A=400*10^(-4);            %m^2        % spacecraft cross - sectional area
 Cd=2.2;                             % drag coefficient
 BC = m / Cd / A; 
 % BC = 122; 
@@ -79,7 +79,15 @@ kepOut = sim('Copy_of_SatSim_ARES','Solver',solv_kep,'FixedStep',step_kep);
 %   updating initial conditions, 2nd run using ouput from 1st
 
 %space environment
-A = 125 * 10^(-4); 
+% A =   125 * 10^(-4); 
+% A = 124.5 * 10^(-4);
+% A =   124 * 10^(-4); 
+% A = 123.5 * 10^(-4);
+% A =   123 * 10^(-4);
+
+
+
+
 BC = m / Cd / A; 
 ndays1=kepOut.time(end)/60/60/24;  %days since intial time of simulation
 jdate=jdate+ndays1;                %new julian date at beginning of 2nd run
@@ -252,4 +260,6 @@ gamma=rad2deg(gamma);  %[rad] to [deg]
 % legend('Vx tangent','Vz radial')
 % grid on
 % grid minor
+%% 
+save('A123.mat', 'h', 'x', 'time');
 
