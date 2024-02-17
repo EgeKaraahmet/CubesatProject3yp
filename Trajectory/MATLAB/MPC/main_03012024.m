@@ -213,7 +213,8 @@ pvcost = [xf; Sf; Q; R; Q_heat; p;space_coes];
 x_op_0 = [h0;X0;V0;theta0;gamma0]; 
 % x_op_0 = [200*10^3;0;7788;0;0]; 
 
-
+u_min = 100 * 10^(-4); 
+u_max = 150 * 10^(-4);
 
 
 %% Design Nonlinear MPC Controller
@@ -240,8 +241,8 @@ end
 
 
 %% Specify hard bounds. 
-msobj.MV.Min = 100 * 10^(-4);
-msobj.MV.Max =  150 * 10^(-4);
+msobj.MV.Min = u_min;
+msobj.MV.Max = u_max;
 
 
 
@@ -398,8 +399,8 @@ msobj_tracking.Weights.OutputVariables = 100*ones(1,ny);
 
 %%
 % Set the same bounds for the area inputs.
-msobj_tracking.MV.Min = 100 * 10^(-4);
-msobj_tracking.MV.Max = 150 * 10^(-4);
+msobj_tracking.MV.Min = u_min;
+msobj_tracking.MV.Max = u_max;
 
 
 %%
@@ -518,4 +519,4 @@ u_plot_kmf = uHistory_kmf;
 % gamma_plot_kmf = [gamma_plot_kmf_non_negative; gamma_plot_kmf(index_greatestNegativeElement)];
 
 %%
-% save("A400.mat","x_plot_out","xHistory_kmf")
+% save("A123.mat","x_plot_out","xHistory_kmf")

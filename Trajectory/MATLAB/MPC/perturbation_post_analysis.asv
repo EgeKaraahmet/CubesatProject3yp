@@ -94,25 +94,19 @@ load('A126.mat')
 h_plot_kmf_A126 = xHistory_kmf(:,1);
 X_plot_kmf_A126 = xHistory_kmf(:,2);
 
-plot(abs(X_plot_kmf_A123)/1000,h_plot_kmf_A123/1000, ...
-    abs(X_plot_kmf_A123p5)/1000,h_plot_kmf_A123p5/1000, ...
-    abs(X_plot_kmf_A124)/1000,h_plot_kmf_A124/1000, ...
-    abs(X_plot_kmf_A124p5)/1000,h_plot_kmf_A124p5/1000, ...
-    abs(X_plot_kmf_A125)/1000,h_plot_kmf_A125/1000, ...
-    abs(x_reference_atm)/1000,h_reference_atm/1000,'b');
-%, ...
-    %abs(X_plot_kmf_A125p5)/1000,h_plot_kmf_A125p5, ...
-    %abs(X_plot_kmf_A126)/1000,h_plot_kmf_A126, ...
-    %abs(x_reference_atm)/1000,h_reference_atm,'b')
+plot(abs(X_plot_kmf_A123)/1000,h_plot_kmf_A123, ...
+    abs(X_plot_kmf_A123p5)/1000,h_plot_kmf_A123p5, ...
+    abs(X_plot_kmf_A124)/1000,h_plot_kmf_A124, ...
+    abs(X_plot_kmf_A124p5)/1000,h_plot_kmf_A124p5, ...
+    abs(X_plot_kmf_A125)/1000,h_plot_kmf_A125, ...
+    abs(X_plot_kmf_A125p5)/1000,h_plot_kmf_A125p5, ...
+    abs(X_plot_kmf_A126)/1000,h_plot_kmf_A126, ...
+    abs(x_reference_atm)/1000,h_reference_atm,'b')
 
 ylim([0, inf]);
 xlabel('Horizontal distance travelled (km)');
-title('Perturbation test - varying fin areas: altitude vs. horizontal distance travelled plot')
 ylabel('Altitude (km)');
-legend('Reference altitude vs. distance ', 'Trajectory Tracking (with EKF)')
 
-% Add legend
-legend('A=23cm^2', 'A=23.5cm^2', 'A=24cm^2', 'A=24.5cm^2', 'A=25cm^2', 'Reference Altitude', 'Location', 'best');
 %% Calculation 
 h_alt = 6378; 
 
@@ -140,24 +134,13 @@ X_last_125 = abs(X_plot_kmf_A125(end))/1000;
 p_125 = sqrt(h_alt^2 + X_last_125^2); 
 pe_125 = abs(p_125 - p_ref);
 
-% X_last_125p5 = abs(X_plot_kmf_A125p5(end))/1000; 
-% p_125p5 = sqrt(h_alt^2 + X_last_125p5^2);
-% pe_125p5 = abs(p_125p5 - p_ref);
-% 
-% X_last_126 = abs(X_plot_kmf_A126(end))/1000; 
-% p_126 = sqrt(h_alt^2 + X_last_126^2);
-% pe_126 = abs(p_126 - p_ref);
+X_last_125p5 = abs(X_plot_kmf_A125p5(end))/1000; 
+p_125p5 = sqrt(h_alt^2 + X_last_125p5^2);
+pe_125p5 = abs(p_125p5 - p_ref);
 
-% Define the range of areas in cm^2
-areas = [23, 23.5, 24, 24.5, 25]; %, 25.5, 26];
+X_last_126 = abs(X_plot_kmf_A126(end))/1000; 
+p_126 = sqrt(h_alt^2 + X_last_126^2);
+pe_126 = abs(p_126 - p_ref);
 
-% Define the pe values
-pe = [pe_123, pe_123p5, pe_124, pe_124p5, pe_125];%, pe_125p5, pe_126];
-
-% Create a table
-T = table(areas', pe', 'VariableNames', {'Area (cm^2)', 'pe Value'});
-
-% Display the table
-disp(T);
-
-
+areas = [23, 23.5, 24, 24.5, 25, 25.5, 26];
+pe = [pe123,pe123p5,pe124,pe124p5,pe125,pe125p5,pe126]

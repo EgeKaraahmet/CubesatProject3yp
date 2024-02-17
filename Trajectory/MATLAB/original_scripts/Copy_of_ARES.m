@@ -9,9 +9,9 @@ close all
 
 %% Initial conditions 
 % Input 
-m = 3;                    %kg         % spacecraft mass  m = 3 for QURMAN; 6 for our cubesat
-A=400*10^(-4);            %m^2        % spacecraft cross - sectional area
-Cd=2.2;                             % drag coefficient
+m = 6;                    %kg         % spacecraft mass  m = 3 for QURMAN; 6 for our cubesat
+A=403*10^(-4);            %m^2        % spacecraft cross - sectional area
+Cd=2.03;                             % drag coefficient
 BC = m / Cd / A; 
 % BC = 122; 
 
@@ -43,7 +43,7 @@ e=(r_a-r_p)/(r_a+r_p);                % eccentricity
 %re-entry path initial values (at t=0 s)
 x0=0;                             % m          % travelled distance
 gamma0=0;                         % rad        % flight path angle
-theta0=28.7;                         % rad        % true anomaly   %% 28.7
+theta0=0;                         % rad        % true anomaly   %% 28.7
 r0=a*(1-e^2)/(1+e*cos(theta0));   % km         % position vector length
 h0=r0-Re;                         % km         % height 
 V0=sqrt(mi*(2/r0-1/a));           % km/s       % orbital speed (ellipse)
@@ -79,7 +79,11 @@ kepOut = sim('Copy_of_SatSim_ARES','Solver',solv_kep,'FixedStep',step_kep);
 %   updating initial conditions, 2nd run using ouput from 1st
 
 %space environment
-% A =   125 * 10^(-4); 
+% A =   127 * 10^(-4); 
+% A = 126.5 * 10^(-4);
+% A =   126 * 10^(-4); 
+% A = 125.5 * 10^(-4);
+A =   125 * 10^(-4); 
 % A = 124.5 * 10^(-4);
 % A =   124 * 10^(-4); 
 % A = 123.5 * 10^(-4);
@@ -87,7 +91,7 @@ kepOut = sim('Copy_of_SatSim_ARES','Solver',solv_kep,'FixedStep',step_kep);
 
 
 
-
+Cd = 2.2; 
 BC = m / Cd / A; 
 ndays1=kepOut.time(end)/60/60/24;  %days since intial time of simulation
 jdate=jdate+ndays1;                %new julian date at beginning of 2nd run
@@ -124,6 +128,18 @@ gamma=[kepOut.gamma;atmOut.gamma];
 theta=[kepOut.theta;atmOut.theta];
 rho=[kepOut.rho;atmOut.rho];
 dotV=[kepOut.dotV;atmOut.dotV];
+
+% % Only h < 80 km
+% h=[atmOut.h];
+% x=[atmOut.x];
+% time=[atmOut.time];
+% V=[atmOut.V];
+% Vx=[atmOut.Vx];
+% Vz=[atmOut.Vz];
+% gamma=[atmOut.gamma];
+% theta=[atmOut.theta];
+% rho=[atmOut.rho];
+% dotV=[atmOut.dotV];
 
 %   data filtering
 %section to be revised
@@ -261,5 +277,5 @@ gamma=rad2deg(gamma);  %[rad] to [deg]
 % grid on
 % grid minor
 %% 
-save('A123.mat', 'h', 'x', 'time');
+% save('A125p5.mat', 'h', 'x', 'time');
 

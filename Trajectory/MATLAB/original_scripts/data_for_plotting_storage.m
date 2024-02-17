@@ -106,13 +106,13 @@ title('Trajectory Dynamics System - Time vs Altitude')
 
 
 %% error cal
-abs(heat1_max_my_model-heat1_max)/heat1_max*100
+error_heat = abs(heat1_max_my_model-heat1_max)/heat1_max*100
 
-abs(gload_max_my_model-gload_max)/gload_max*100
+error_g = abs(gload_max_my_model-gload_max)/gload_max*100
 
-abs(ndays_my_model-ndays)/ndays*100
+error_time = abs(ndays_my_model-ndays)/ndays*100
 
-abs(x_my_model(end) - x(end)) / abs(x(end)) * 100
+error_x = abs(x_my_model(end) - x(end)) / abs(x(end)) * 100
 
 
 alti = (200+6371); 
