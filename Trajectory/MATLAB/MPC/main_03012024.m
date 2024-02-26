@@ -103,8 +103,8 @@ kepOut = sim('reference_signal_generator_MPC','Solver',solv_kep,'FixedStep',step
 
 %%
 %   updating initial conditions, 2nd run using ouput from 1st
-%A=125*10^(-4);          %m^2        % spacecraft cross - sectional area
-%BC = m / Cd / A; 
+A=125*10^(-4);          %m^2        % spacecraft cross - sectional area
+BC = m / Cd / A; 
 
 %space environment 
 ndays1=kepOut.time(end)/60/60/24;  %days since intial time of simulation

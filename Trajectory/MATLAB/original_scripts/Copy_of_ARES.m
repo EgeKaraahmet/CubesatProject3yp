@@ -132,7 +132,7 @@ dotV=[kepOut.dotV;atmOut.dotV];
 % % Only h < 80 km
 % h=[atmOut.h];
 % x=[atmOut.x];
-% time=[atmOut.time];
+time_deorbit=[kepOut.time];
 % V=[atmOut.V];
 % Vx=[atmOut.Vx];
 % Vz=[atmOut.Vz];
@@ -172,6 +172,7 @@ end
 % fprintf('Total time to de-orbit: %3.2f years\n',nyears)
 
 ndays=time(end)/3.154e+7*365;
+ndays_deorbit=time_deorbit(end)/3.154e+7*365
 fprintf('Total time to de-orbit: %3.2f days\n',ndays)
 
 %structural loading
