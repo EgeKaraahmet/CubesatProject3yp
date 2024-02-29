@@ -10,10 +10,9 @@ close all
 %% Initial conditions 
 % Input 
 m = 6;                    %kg         % spacecraft mass  m = 3 for QURMAN; 6 for our cubesat
-A=403*10^(-4);            %m^2        % spacecraft cross - sectional area
-Cd=2.03;                             % drag coefficient
+A=360.4*10^(-4);            %m^2        % spacecraft cross - sectional area
+Cd=2.2;                             % drag coefficient
 BC = m / Cd / A; 
-% BC = 122; 
 
 %constants
 mi=398600.44;           %km^3/s^2   % Earth G*M
@@ -91,7 +90,6 @@ A =   125 * 10^(-4);
 
 
 
-Cd = 2.2; 
 BC = m / Cd / A; 
 ndays1=kepOut.time(end)/60/60/24;  %days since intial time of simulation
 jdate=jdate+ndays1;                %new julian date at beginning of 2nd run

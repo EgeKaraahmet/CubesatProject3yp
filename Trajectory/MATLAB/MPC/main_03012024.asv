@@ -199,7 +199,7 @@ x_op_0 = [h0;X0;V0;theta0;gamma0];
 % x_op_0 = [200*10^3;0;7788;0;0]; 
 
 u_min = 100 * 10^(-4); 
-u_max = 156 * 10^(-4);
+u_max = 154 * 10^(-4);
 
 
 %% Design Nonlinear MPC Controller
@@ -504,4 +504,4 @@ u_plot_kmf = uHistory_kmf;
 % gamma_plot_kmf = [gamma_plot_kmf_non_negative; gamma_plot_kmf(index_greatestNegativeElement)];
 
 %%
-save("A128.mat","x_plot_out","xHistory_kmf")
+save("A127p5.mat","x_plot_out","xHistory_kmf")

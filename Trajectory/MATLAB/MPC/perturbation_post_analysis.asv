@@ -122,55 +122,56 @@ ylabel('Altitude (km)');
 legend('Reference altitude vs. distance ', 'Trajectory Tracking (with EKF)')
 
 % Add legend
-legend('A=22cm^2','A=22.5cm^2','A=23cm^2', 'A=23.5cm^2', 'A=24cm^2', 'A=24.5cm^2', 'A=25cm^2','A=25.5cm^2','A=26cm^2', 'Reference Altitude', 'Location', 'southwest');
+legend('A=22cm^2','A=22.5cm^2','A=23cm^2', 'A=23.5cm^2', 'A=24cm^2', 'A=24.5cm^2', 'A=25cm^2','A=25.5cm^2','A=26cm^2', 'Reference Altitude');
 % Calculation 
 h_alt = 6378; 
 %%
 X_last_ref = abs(x_reference_atm(end))/1000; 
 X_last_ref = X_last_ref - (2*pi*h_alt)*floor(X_last_ref/(2*pi*h_alt));
-p_ref = sqrt(h_alt^2 + X_last_ref^2);
+%p_ref = sqrt(h_alt^2 + X_last_ref^2);
+p_ref = sqrt( X_last_ref^2);
 
 %%
 X_last_123 = abs(X_plot_kmf_A123(end))/1000; 
 X_last_123 = X_last_123 - (2*pi*h_alt)*floor(X_last_123/(2*pi*h_alt));
-p_123 = sqrt(h_alt^2 + X_last_123^2); 
+p_123 = sqrt(X_last_123^2); 
 pe_123 = abs(p_123 - p_ref);
 %%
 X_last_123p5 = abs(X_plot_kmf_A123p5(end))/1000; 
 X_last_123p5 = X_last_123p5 - (2*pi*h_alt)*floor(X_last_123p5/(2*pi*h_alt));
-p_123p5 = sqrt(h_alt^2 + X_last_123p5^2);
+p_123p5 = sqrt(X_last_123p5^2);
 pe_123p5 = abs(p_123p5 - p_ref);
 
 X_last_124 = abs(X_plot_kmf_A124(end))/1000; 
 X_last_124 = X_last_124 - (2*pi*h_alt)*floor(X_last_124/(2*pi*h_alt));
-p_124 = sqrt(h_alt^2 + X_last_124^2);
+p_124 = sqrt(X_last_124^2);
 pe_124 = abs(p_124 - p_ref);
 
 X_last_124p5 = abs(X_plot_kmf_A124p5(end))/1000; 
 X_last_124p5 = X_last_124p5 - (2*pi*h_alt)*floor(X_last_124p5/(2*pi*h_alt));
-p_124p5 = sqrt(h_alt^2 + X_last_124p5^2);
+p_124p5 = sqrt( X_last_124p5^2);
 pe_124p5 = abs(p_124p5 - p_ref);
 
 X_last_125 = abs(X_plot_kmf_A125(end))/1000; 
 X_last_125 = X_last_125 - (2*pi*h_alt)*floor(X_last_125/(2*pi*h_alt));
-p_125 = sqrt(h_alt^2 + X_last_125^2); 
+p_125 = sqrt(X_last_125^2); 
 pe_125 = abs(p_125 - p_ref);
 
 X_last_125p5 = abs(X_plot_kmf_A125p5(end))/1000; 
 X_last_125p5 = X_last_125p5 - (2*pi*h_alt)*floor(X_last_125p5/(2*pi*h_alt));
-p_125p5 = sqrt(h_alt^2 + X_last_125p5^2);
+p_125p5 = sqrt(X_last_125p5^2);
 pe_125p5 = abs(p_125p5 - p_ref);
 % 
 X_last_126 = abs(X_plot_kmf_A126(end))/1000; 
 X_last_126 = X_last_126 - (2*pi*h_alt)*floor(X_last_126/(2*pi*h_alt));
-p_126 = sqrt(h_alt^2 + X_last_126^2);
+p_126 = sqrt( X_last_126^2);
 pe_126 = abs(p_126 - p_ref);
 
 % Define the range of areas in cm^2
-areas = [23, 23.5, 24, 24.5, 25, 25.5, 26];
+areas = [23, 23.5, 24, 24.5, 25,25.5, 26]; %, 25.5, 26];
 
 % Define the pe values
-pe = [pe_123, pe_123p5, pe_124, pe_124p5, pe_125,pe_125p5, pe_126];%, pe_125p5, pe_126];
+pe = [pe_123, pe_123p5, pe_124, pe_124p5, pe_125, pe_125p5, pe_126];%, pe_125p5, pe_126];
 
 % Create a table
 T = table(areas', pe', 'VariableNames', {'Area (cm^2)', 'pe Value'});
