@@ -36,25 +36,25 @@ t = 0; %time is 0, in seconds
 dt = 0.1;
 i = 1;
 j = 0; %this counter counts how many times t reaches 2700.
-orbittype = "Sun";
+orbittype = "Shadow";
 
-while j < 2
-    if  mod(j,2) == 0
-        orbittype = "Sun";
-    else
-        orbittype = "Shadow";
-    end
-    if orbittype == "Shadow"
-        q5in = 0;
+while j < 80
+   if  mod(j,2) == 0
+       orbittype = "Sun";
+   else
+       orbittype = "Shadow";
+   end
+   if orbittype == "Shadow"
+        q5in = 22.15;
         q3in = 22.15; %one part of q3
         q2in = 3.98;
-    elseif orbittype == "Sun"
-        q5in = 27;
-        q3in = 33.892; %one part of q3
-        q2in = 3.98;
-    else
-        stop("Error: Orbittype not defined")
-    end
+   elseif orbittype == "Sun"
+       q5in = 27;
+       q3in = 33.892; %one part of q3
+       q2in = 3.98;
+   else
+       stop("Error: Orbittype not defined")
+   end
 
 q5out = e * sigma * (T5(i)^4) * L5;
 q4out = e * sigma * (T4(i)^4) * L4;
@@ -97,6 +97,4 @@ legend('Region 2','Region 3','Region 4','Region 5')
 xlabel('Time (min)')
 ylabel('Temperature (K)')
 title('Temperature variation during multiple orbits from an initial position of 290K')
-
-
 
